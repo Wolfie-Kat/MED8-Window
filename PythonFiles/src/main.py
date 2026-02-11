@@ -3,12 +3,12 @@ import cv2
 
 # To read image from disk, we use
 # cv2.imread function, in below method,
-img = cv2.imread(r"C:\Users\katri\Pictures\Loading Cat 1.jpg", cv2.IMREAD_COLOR)
+img = cv2.imread(r"C:\Users\acroh\Pictures\Photo.png", cv2.IMREAD_COLOR)
 
 # Creating GUI window to display an image on screen
 # first Parameter is windows title (should be in string format)
 # Second Parameter is image array
-cv2.imshow("Loading Cat", img)
+cv2.imshow("Me Bored", img)
 
 # To hold the window on screen, we use cv2.waitKey method
 # Once it detected the close input, it will release the control
