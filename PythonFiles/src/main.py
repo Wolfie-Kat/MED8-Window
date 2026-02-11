@@ -1,23 +1,42 @@
-# Python code to read image
-import cv2
+import numpy as np
+import cv2 as cv
+ 
+cap = cv.VideoCapture(0, cv.CAP_AVFOUNDATION)
+cap.set(cv.CAP_PROP_FRAME_WIDTH,1920)
+cap.set(cv.CAP_PROP_FRAME_HEIGHT,1080)
 
-# To read image from disk, we use
-# cv2.imread function, in below method,
-img = cv2.imread(r"C:\Users\acroh\Pictures\Photo.png", cv2.IMREAD_COLOR)
 
-# Creating GUI window to display an image on screen
-# first Parameter is windows title (should be in string format)
-# Second Parameter is image array
-cv2.imshow("Me Bored", img)
+face_classifier = cv.CascadeClassifier(
+    cv.data.haarcascades + "haarcascade_frontalface_default.xml"
+)
 
-# To hold the window on screen, we use cv2.waitKey method
-# Once it detected the close input, it will release the control
-# To the next line
-# First Parameter is for holding screen for specified milliseconds
-# It should be positive integer. If 0 pass an parameter, then it will
-# hold the screen until user close it.
-cv2.waitKey(0)
 
-# It is for removing/deleting created GUI window from screen
-# and memory
-cv2.destroyAllWindows()
+def detect_bounding_box(vid):
+    gray_image = cv.cvtColor(vid, cv.COLOR_BGR2GRAY)
+    faces = face_classifier.detectMultiScale(gray_image, 1.1, 5, minSize=(40, 40))
+    for (x, y, w, h) in faces:
+        cv.rectangle(vid, (x, y), (x + w, y + h), (0, 255, 0), 4)
+    return vid
+
+if not cap.isOpened():
+    print("Cannot open camera")
+    exit()
+
+while True:
+    # Capture frame-by-frame
+    ret, frame = cap.read()
+ 
+    # if frame is read correctly ret is True
+    if not ret:
+        print("Can't receive frame (stream end?). Exiting ...")
+        break
+
+    faces = detect_bounding_box(frame)
+    # Display the resulting frame
+    cv.imshow('frame', faces)
+    if cv.waitKey(1) == ord('q'):
+        break
+ 
+# When everything done, release the capture
+cap.release()
+cv.destroyAllWindows()
