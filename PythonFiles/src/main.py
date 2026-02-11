@@ -1,7 +1,7 @@
 import numpy as np
 import cv2 as cv
  
-cap = cv.VideoCapture(0, cv.CAP_AVFOUNDATION)
+cap = cv.VideoCapture(0)
 cap.set(cv.CAP_PROP_FRAME_WIDTH,1920)
 cap.set(cv.CAP_PROP_FRAME_HEIGHT,1080)
 
