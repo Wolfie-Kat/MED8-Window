@@ -1,6 +1,7 @@
 import cv2 as cv
 from face_recognition import FaceDetector
 from socket import *
+import struct
 
 
 def main():
@@ -27,7 +28,8 @@ def main():
         frame_with_face_boxes, faces = detector.detect_and_draw(frame)
         face_x, face_y = detector.get_normalized_face_screen_positions(frame, faces)
         
-        encoded_message = f"{face_x:.4f},{face_y:.4f}".encode()
+        message = struct.pack('ff', face_x, face_y)
+        encoded_message = message
         clientSocket.sendto(encoded_message, address)
         
         # cv.imshow('frame', frame_with_face_boxes)
