@@ -30,7 +30,7 @@ def main():
         encoded_message = f"{face_x:.4f},{face_y:.4f}".encode()
         clientSocket.sendto(encoded_message, address)
         
-        cv.imshow('frame', frame_with_face_boxes)
+        # cv.imshow('frame', frame_with_face_boxes)
         if cv.waitKey(1) == ord('q'):
             break
     
