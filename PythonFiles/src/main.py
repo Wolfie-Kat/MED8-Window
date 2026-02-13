@@ -48,7 +48,7 @@ def main():
         clientSocket.sendto(message, address)
         
         
-        render_video(cv, frame, bbox)
+        # render_video(cv, frame, bbox)
         if cv.waitKey(1) == ord('q'):
             break
     
