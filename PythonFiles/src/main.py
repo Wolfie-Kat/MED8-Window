@@ -1,7 +1,18 @@
+import os
+
 import cv2 as cv
+from utilities import Utilities
+from face_landmarks import FaceLandmarker
 from face_recognition import FaceDetector
 from socket import *
 import struct
+
+def render_video(cv, frame, bbox):
+    if bbox is not None:
+        x, y, w, h = bbox
+        cv.rectangle(frame, (x, y), (x + w, y + h), color=(0, 255, 0), thickness=4)
+    cv.imshow('frame', frame)   
+    return frame
 
 
 def main():
@@ -13,6 +24,8 @@ def main():
     address = ("127.0.0.1", 8888)
 
     detector = FaceDetector()
+    landmarker = FaceLandmarker()
+    utilities = Utilities()
 
     if not cap.isOpened():
         print("Cannot open camera")
@@ -20,19 +33,22 @@ def main():
 
     while True:
         ret, frame = cap.read()
+        screen_y, screen_x = frame.shape[:2]
+        
         if not ret:
             print("Can't receive frame (stream end?). Exiting ...")
             break
 
-
-        frame_with_face_boxes, faces = detector.detect_and_draw(frame)
-        face_x, face_y = detector.get_normalized_face_screen_positions(frame, faces)
+        # Returns exact bounding box of a face on the screen
+        bbox = landmarker.detect_faces(frame)
         
+        #Sends face positions to udp socket for unity
+        face_x, face_y = utilities.normalize_face_position(screen_x, screen_y, bbox)
         message = struct.pack('ff', face_x, face_y)
-        encoded_message = message
-        clientSocket.sendto(encoded_message, address)
+        clientSocket.sendto(message, address)
         
-        # cv.imshow('frame', frame_with_face_boxes)
+        
+        # render_video(cv, frame, bbox)
         if cv.waitKey(1) == ord('q'):
             break
     
