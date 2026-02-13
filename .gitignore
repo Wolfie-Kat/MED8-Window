@@ -76,7 +76,9 @@ crashlytics-build.properties
 
 # Python exceptions
 venv/
-
+__pycache__/
+*.py[cod]
+*$py.class
 .DS_Store
 
 # End of https://www.toptal.com/developers/gitignore/api/unity

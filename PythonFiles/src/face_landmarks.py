@@ -5,8 +5,8 @@ from mediapipe.tasks.python import vision
 from utilities import Utilities
 import os
 
-
-base_options = python.BaseOptions(model_asset_path='face_landmarker.task')
+path= os.path.join(os.path.dirname(os.path.dirname(__file__)),'face_landmarker.task')
+base_options = python.BaseOptions(model_asset_path=path)
 
 options = vision.FaceLandmarkerOptions(
     base_options=base_options,
