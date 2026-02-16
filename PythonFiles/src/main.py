@@ -40,12 +40,13 @@ def main():
             break
 
         # Returns exact bounding box of a face on the screen
-        bbox = landmarker.detect_faces(frame)
+        bbox = detector.detect_faces(frame)
         
         #Sends face positions to udp socket for unity
-        face_x, face_y = utilities.normalize_face_position(screen_x, screen_y, bbox)
-        message = struct.pack('ff', face_x, face_y)
-        clientSocket.sendto(message, address)
+        if bbox != None:
+            face_x, face_y = utilities.normalize_face_position(screen_x, screen_y, bbox)
+            message = struct.pack('ff', face_x, face_y)
+            clientSocket.sendto(message, address)
         
         
         # render_video(cv, frame, bbox)
