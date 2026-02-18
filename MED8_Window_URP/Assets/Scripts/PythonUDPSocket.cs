@@ -31,7 +31,7 @@ public class UnityPythonConnector : MonoBehaviour
         {
             timer = 0f;
             recentering = false;
-            RecenterView(5, _latestX, _latestY); // Use for interpolation
+            RecenterView(100, _latestX, _latestY); // Use for interpolation
             //receivedValue = new Vector2(_latestX, _latestY); // Use for pure data
             hasNewData = false;
         }
@@ -91,7 +91,7 @@ public class UnityPythonConnector : MonoBehaviour
         else
         {
             _latestX = Mathf.Lerp(receivedValue.x, endPointX, Time.deltaTime * recenterSpeed);
-            _latestX = Mathf.Lerp(receivedValue.x, endPointX, Time.deltaTime * recenterSpeed);
+            _latestY = Mathf.Lerp(receivedValue.y, endPointY, Time.deltaTime * recenterSpeed);
         }
         receivedValue = new Vector2(_latestX, _latestY);
     }

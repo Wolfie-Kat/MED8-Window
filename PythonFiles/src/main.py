@@ -1,5 +1,5 @@
 import os
-
+os.environ['OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS'] = '0'
 import cv2 as cv
 from utilities import Utilities
 from face_landmarks import FaceLandmarker
@@ -40,7 +40,7 @@ def main():
             break
 
         # Returns exact bounding box of a face on the screen
-        bbox = detector.detect_faces(frame)
+        bbox = landmarker.detect_faces(frame)
         
         #Sends face positions to udp socket for unity
         if bbox != None:
@@ -49,7 +49,7 @@ def main():
             clientSocket.sendto(message, address)
         
         
-        # render_video(cv, frame, bbox)
+        #render_video(cv, frame, bbox)
         if cv.waitKey(1) == ord('q'):
             break
     
