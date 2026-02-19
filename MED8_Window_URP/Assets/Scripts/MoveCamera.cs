@@ -31,6 +31,11 @@ public class MoveCamera : MonoBehaviour
             );
     }
 
+    void SetVerticalAngle()
+    {
+        verticalAngle = (horizontalAngle / gameManager._FOV) * -1;
+    }
+
     //----------------------------------------------------------------------------------------------------------//
     // Start is called before the first frame update
     void Start()
@@ -41,6 +46,7 @@ public class MoveCamera : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        SetVerticalAngle();
         TiltCam(gameManager.receivedValue.x, gameManager.receivedValue.y);
 
         // Rounding the values to 2 decimals
