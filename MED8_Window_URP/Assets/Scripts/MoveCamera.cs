@@ -9,7 +9,7 @@ public class MoveCamera : MonoBehaviour
     // Variables
     [SerializeField] private UnityPythonConnector gameManager;
     [SerializeField] private float verticalAngle;
-    [SerializeField] private float horiziontalAngle;
+    [SerializeField] private float horizontalAngle;
 
     //----------------------------------------------------------------------------------------------------------//
     // Functions
@@ -17,7 +17,7 @@ public class MoveCamera : MonoBehaviour
     //Tilting the camera
     void TiltCam(float xCoordinate, float yCoordinate)
     {
-        Vector2 normalizedValues = Normalize(xCoordinate, yCoordinate, verticalAngle, horiziontalAngle);
+        Vector2 normalizedValues = Normalize(xCoordinate, yCoordinate, verticalAngle, horizontalAngle);
         transform.rotation = Quaternion.Euler(normalizedValues.x, normalizedValues.y, 0f);
     }
 
@@ -31,6 +31,11 @@ public class MoveCamera : MonoBehaviour
             );
     }
 
+    void SetVerticalAngle()
+    {
+        verticalAngle = (horizontalAngle / gameManager._FOV) * -1;
+    }
+
     //----------------------------------------------------------------------------------------------------------//
     // Start is called before the first frame update
     void Start()
@@ -41,6 +46,7 @@ public class MoveCamera : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        SetVerticalAngle();
         TiltCam(gameManager.receivedValue.x, gameManager.receivedValue.y);
 
         // Rounding the values to 2 decimals

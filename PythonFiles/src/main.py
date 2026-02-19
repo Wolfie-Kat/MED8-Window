@@ -1,5 +1,5 @@
 import os
-
+os.environ['OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS'] = '0'
 import cv2 as cv
 from utilities import Utilities
 from face_landmarks import FaceLandmarker
@@ -14,11 +14,15 @@ def render_video(cv, frame, bbox):
     cv.imshow('frame', frame)   
     return frame
 
+def FOVCalculator (width, height):
+        FOV = width / height
+        return FOV
 
 def main():
     cap = cv.VideoCapture(0)
     cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
     cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
+    Camera_FOV = FOVCalculator(cap.get(cv.CAP_PROP_FRAME_WIDTH), cap.get(cv.CAP_PROP_FRAME_HEIGHT))
 
     clientSocket = socket(AF_INET, SOCK_DGRAM)
     address = ("127.0.0.1", 8888)
@@ -43,12 +47,13 @@ def main():
         bbox = landmarker.detect_faces(frame)
         
         #Sends face positions to udp socket for unity
-        face_x, face_y = utilities.normalize_face_position(screen_x, screen_y, bbox)
-        message = struct.pack('ff', face_x, face_y)
-        clientSocket.sendto(message, address)
+        if bbox != None:
+            face_x, face_y = utilities.normalize_face_position(screen_x, screen_y, bbox)
+            message = struct.pack('fff', face_x, face_y, Camera_FOV)
+            clientSocket.sendto(message, address)
         
         
-        # render_video(cv, frame, bbox)
+        #render_video(cv, frame, bbox)
         if cv.waitKey(1) == ord('q'):
             break
     

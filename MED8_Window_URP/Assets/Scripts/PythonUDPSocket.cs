@@ -3,17 +3,22 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class UnityPythonConnector : MonoBehaviour
 {
     public int port = 8888;
     public Vector2 receivedValue = Vector2.zero;
+    public bool recentering;
     
     private UdpClient _udpClient;
     private Thread _receiveThread;
     private volatile float _latestX;
     private volatile float _latestY;
-    private volatile bool _hasNewData = false;
+    public float _FOV;
+    [SerializeField] private volatile bool hasNewData = false;
+    [SerializeField] private float recenterTimeLimit;
+    [SerializeField] private float timer;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -23,12 +28,23 @@ public class UnityPythonConnector : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (_hasNewData)
+        if (hasNewData)
         {
-            receivedValue = new Vector2(_latestX, _latestY);
-            _hasNewData = false;
-            
-            Debug.Log($"Received: {receivedValue.x}, {receivedValue.y}");
+            timer = 0f;
+            recentering = false;
+            RecenterView(100, _latestX, _latestY); // Use for interpolation
+            //receivedValue = new Vector2(_latestX, _latestY); // Use for pure data
+            hasNewData = false;
+        }
+        else if (!hasNewData && recentering == false)
+        {
+            timer += Time.deltaTime;
+        }
+
+        if (timer >= recenterTimeLimit)
+        {
+            recentering = true;
+            RecenterView(2f);
         }
     }
 
@@ -52,11 +68,12 @@ public class UnityPythonConnector : MonoBehaviour
             try
             {
                 byte[] data = _udpClient.Receive(ref anyIP);
-                if (data.Length >= 8)
+                if (data.Length >= 12)
                 {
                     _latestX = BitConverter.ToSingle(data, 0);
                     _latestY = BitConverter.ToSingle(data, 4);
-                    _hasNewData = true;
+                    _FOV = BitConverter.ToSingle(data, 8);
+                    hasNewData = true;
                 }
             }
             catch (Exception e)
@@ -66,6 +83,21 @@ public class UnityPythonConnector : MonoBehaviour
         }
     }
 
+    private void RecenterView(float recenterSpeed = 1, float endPointX = 0.5f, float endPointY = 0.5f)
+    {
+        if (recentering == false)
+        {
+            _latestX = Mathf.MoveTowards(receivedValue.x, endPointX, Time.deltaTime * recenterSpeed);
+            _latestY = Mathf.MoveTowards(receivedValue.y, endPointY, Time.deltaTime * recenterSpeed);
+        }
+        else
+        {
+            _latestX = Mathf.Lerp(receivedValue.x, endPointX, Time.deltaTime * recenterSpeed);
+            _latestY = Mathf.Lerp(receivedValue.y, endPointY, Time.deltaTime * recenterSpeed);
+        }
+        receivedValue = new Vector2(_latestX, _latestY);
+    }
+    
     private void OnDestroy()
     {
         if (_receiveThread != null)
