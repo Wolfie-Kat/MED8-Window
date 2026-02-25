@@ -1,4 +1,7 @@
+import pickle
+
 import cv2 as cv
+import numpy as np
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
@@ -7,6 +10,11 @@ import os
 
 path= os.path.join(os.path.dirname(os.path.dirname(__file__)),'face_landmarker.task')
 base_options = python.BaseOptions(model_asset_path=path)
+
+CALIBRATION_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),'src', 'calibration', 'output', 'calibration_data.pkl'
+)
+REAL_FACE_WIDTH_CM = 14.2
 
 options = vision.FaceLandmarkerOptions(
     base_options=base_options,
@@ -22,6 +30,13 @@ class FaceLandmarker:
     def __init__(self):
         self.face_landmarker = vision.FaceLandmarker.create_from_options(options)
         self.frame_timestamp = 0
+        self.fx = self.load_focal_length()
+
+    def load_focal_length(self):
+        with open(CALIBRATION_PATH, 'rb') as f:
+            data = pickle.load(f)
+            # fx from the camera matrix
+            return data['camera_matrix'][0, 0]
     
     def detect_landmarks(self, frame):
         rgb_frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
@@ -35,12 +50,24 @@ class FaceLandmarker:
         
         return None
 
+    def estimate_distance(self, landmarks, frame_width, frame_height):
+        left = np.array([landmarks[234].x * frame_width, landmarks[234].y * frame_height])
+        right = np.array([landmarks[454].x * frame_width, landmarks[454].y * frame_height])
+        face_width_px = np.linalg.norm(left - right)
+
+        if face_width_px < 1.0:
+            return 0
+
+        return (REAL_FACE_WIDTH_CM * self.fx) / face_width_px
+
     def detect_faces(self, frame):
         landmarks = self.detect_landmarks(frame)
-        
+
         if landmarks is not None:
-            bbox = Utilities.get_bbox_from_landmarks(landmarks, frame.shape[1], frame.shape[0])
-            return bbox if bbox is not None else None
-        
-        return None
+            h, w = frame.shape[:2]
+            bbox = Utilities.get_bbox_from_landmarks(landmarks, w, h)
+            distance = self.estimate_distance(landmarks, w, h)
+            return bbox, distance
+
+        return None, None
     
