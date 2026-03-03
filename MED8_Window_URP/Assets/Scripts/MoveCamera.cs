@@ -21,6 +21,11 @@ public class MoveCamera : MonoBehaviour
         transform.rotation = Quaternion.Euler(normalizedValues.x, normalizedValues.y, 0f);
     }
 
+    void MoveCam(float x, float y, float z)
+    {
+        
+    }
+
     //Normalize x coordinates from python to unity
     Vector2 Normalize(float xCoordinate, float yCoordinate, float vertical, float horizontal)
     {
