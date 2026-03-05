@@ -157,8 +157,8 @@ public class ProjectionPlane : MonoBehaviour
         }
         
         // Don't crash Unity
-        Size.x = Mathf.Max(1, Size.x);
-        Size.y = Mathf.Max(1, Size.y);
+        Size.x = Mathf.Max(.01f, Size.x);
+        Size.y = Mathf.Max(.01f, Size.y);
         AspectRatio.x = Mathf.Max(1, AspectRatio.x);
         AspectRatio.y = Mathf.Max(1, AspectRatio.y);
 

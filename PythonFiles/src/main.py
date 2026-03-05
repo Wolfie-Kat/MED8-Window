@@ -52,7 +52,7 @@ def main():
         #Sends face positions to udp socket for unity
         if bbox != None:
             face_x, face_y = utilities.normalize_face_position(screen_x, screen_y, bbox)
-            message = struct.pack('ffff', face_x, face_y, aspect_ratio,distance )
+            message = struct.pack('ffff', face_x, face_y, aspect_ratio, distance)
             clientSocket.sendto(message, address)
         
         

@@ -8,11 +8,7 @@ public class MoveCamera : MonoBehaviour
     //----------------------------------------------------------------------------------------------------------//
     // Variables
     [SerializeField] private UnityPythonConnector gameManager;
-    [SerializeField] private float horizontalRange = 2f; // movement left/right
-    [SerializeField] private float verticalRange = 2f;   // movement up/down
-    [SerializeField] private float depth = 0f;           // optional forward/back
-
-    private Vector3 startPosition = new Vector3(0, 0, -5);
+    [SerializeField] private ProjectionPlaneCamera _projectionPlaneCamera;
 
     //----------------------------------------------------------------------------------------------------------//
     
@@ -23,12 +19,22 @@ public class MoveCamera : MonoBehaviour
     
     // Functions
 
-    void MoveCam(float x, float y)
+    void MoveCam(float xNorm, float yNorm)
     {
-        float posX = Mathf.Lerp(horizontalRange, -horizontalRange, x);
-        float posY = Mathf.Lerp(verticalRange, -verticalRange, y);
+        float width = _projectionPlaneCamera.ProjectionScreen.Size.x;
+        float height = _projectionPlaneCamera.ProjectionScreen.Size.y;
 
-        transform.localPosition = startPosition + new Vector3(posX, posY, 0f);
+        float x = (0.5f - xNorm) * width;
+        float y = (0.5f - yNorm) * height;
+        float z = (gameManager.distance * 0.01f);
+
+        Vector3 eye =
+            _projectionPlaneCamera.ProjectionScreen.transform.position +
+            _projectionPlaneCamera.ProjectionScreen.DirRight * x +
+            _projectionPlaneCamera.ProjectionScreen.DirUp * y +
+            _projectionPlaneCamera.ProjectionScreen.DirNormal * z;
+
+        transform.position = eye;
     }
 
     
