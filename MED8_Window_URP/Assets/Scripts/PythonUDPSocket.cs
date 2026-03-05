@@ -16,6 +16,7 @@ public class UnityPythonConnector : MonoBehaviour
     private volatile float _latestX;
     private volatile float _latestY;
     public float _FOV;
+    public float distance;
     [SerializeField] private volatile bool hasNewData = false;
     [SerializeField] private float recenterTimeLimit;
     [SerializeField] private float timer;
@@ -68,11 +69,12 @@ public class UnityPythonConnector : MonoBehaviour
             try
             {
                 byte[] data = _udpClient.Receive(ref anyIP);
-                if (data.Length >= 12)
+                if (data.Length >= 16)
                 {
                     _latestX = BitConverter.ToSingle(data, 0);
                     _latestY = BitConverter.ToSingle(data, 4);
                     _FOV = BitConverter.ToSingle(data, 8);
+                    distance = BitConverter.ToSingle(data, 12);
                     hasNewData = true;
                 }
             }
