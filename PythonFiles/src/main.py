@@ -1,9 +1,9 @@
 import os
 
 os.environ['OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS'] = '0'
+from gestures.gesture_recognizer import GestureRecognizer
 import cv2 as cv
 from face_landmarks import FaceLandmarker
-from gesture_recognizer import GestureRecognizer
 from socket import *
 import struct
 
