@@ -9,32 +9,60 @@ public class MoveCamera : MonoBehaviour
     // Variables
     [SerializeField] private UnityPythonConnector gameManager;
     [SerializeField] private ProjectionPlaneCamera _projectionPlaneCamera;
+    [SerializeField] private GameObject projectionPlane;
+    
+    [Header("Movement Settings")]
+    public Vector3 PlaneOrigin; // Set this in Start() or the Inspector
+    public float MovementScale = 1.0f;
+    
+    [Header("Calibration Settings")]
+    public float WebcamHorizontalFOV = 60f; // Typical webcam FOV
+    public float ScreenPhysicalWidth = 0.5f; // Physical width of your monitor in meters
+    
+    [Header("Natural Ratios")]
+    [Range(0, 1)] public float WindowMovementWeight = 0.9f; // How much the PLANE moves
+    [Range(0, 1)] public float HeadLeaningWeight = 0.1f;    // How much your HEAD moves relative to plane
+    public float GlobalZScale = 0.05f;
 
     //----------------------------------------------------------------------------------------------------------//
     
     void Start()
     {
-        
+        if (projectionPlane != null)
+            PlaneOrigin = projectionPlane.transform.position;
     }
     
     // Functions
 
     void MoveCam(float xNorm, float yNorm)
     {
-        float width = _projectionPlaneCamera.ProjectionScreen.Size.x;
-        float height = _projectionPlaneCamera.ProjectionScreen.Size.y;
+        var screen = _projectionPlaneCamera.ProjectionScreen;
+    
+        // 1. Get distance in meters (assuming Python sends cm)
+        float distMeters = gameManager.distance * 0.01f;
 
-        float x = (0.5f - xNorm) * width;
-        float y = (0.5f - yNorm) * height;
-        float z = (gameManager.distance * 0.01f);
+        // Map 0...1 to -HalfFOV... +HalfFOV
+        float angleX = (0.5f - xNorm) * WebcamHorizontalFOV; 
+        float angleY = (0.5f - yNorm) * (WebcamHorizontalFOV / 1.77f); // Adjust for 16:9 aspect
 
-        Vector3 eye =
-            _projectionPlaneCamera.ProjectionScreen.transform.position +
-            _projectionPlaneCamera.ProjectionScreen.DirRight * x +
-            _projectionPlaneCamera.ProjectionScreen.DirUp * y +
-            _projectionPlaneCamera.ProjectionScreen.DirNormal * z;
+        // 3. Trigonometric Physical Offset (SOH CAH TOA)
+        // Physical Offset = Tan(angle) * Distance
+        float physicalX = Mathf.Tan(angleX * Mathf.Deg2Rad) * distMeters;
+        float physicalY = Mathf.Tan(angleY * Mathf.Deg2Rad) * distMeters;
 
-        transform.position = eye;
+        // 4. Update Plane and Camera
+        // (Apply your Weights here as discussed previously)
+        float rawZ = distMeters;
+        float planeZ = PlaneOrigin.z + (rawZ * WindowMovementWeight);
+        float headZ = (rawZ * HeadLeaningWeight) + 0.1f;
+
+        projectionPlane.transform.position = new Vector3(PlaneOrigin.x, PlaneOrigin.y, planeZ);
+
+        // Position the camera using the calibrated physical offsets
+        transform.position = projectionPlane.transform.position +
+                             (screen.DirRight * physicalX) + 
+                             (screen.DirUp * physicalY) +
+                             (screen.DirNormal * headZ);
     }
 
     
