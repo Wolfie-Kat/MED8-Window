@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -17,6 +18,7 @@ public class UnityPythonConnector : MonoBehaviour
     private volatile float _latestY;
     public float _FOV;
     public float distance;
+    public float gesture;
     [SerializeField] private volatile bool hasNewData = false;
     [SerializeField] private float recenterTimeLimit;
     [SerializeField] private float timer;
@@ -69,12 +71,14 @@ public class UnityPythonConnector : MonoBehaviour
             try
             {
                 byte[] data = _udpClient.Receive(ref anyIP);
-                if (data.Length >= 16)
+                if (data.Length >= 20)
                 {
                     _latestX = BitConverter.ToSingle(data, 0);
                     _latestY = BitConverter.ToSingle(data, 4);
                     _FOV = BitConverter.ToSingle(data, 8);
                     distance = BitConverter.ToSingle(data, 12);
+                    gesture = BitConverter.ToSingle(data, 16);
+                    HandleGesture(gesture);
                     hasNewData = true;
                 }
             }
@@ -82,6 +86,23 @@ public class UnityPythonConnector : MonoBehaviour
             {
                 Debug.LogError("UDP receive error: " + e.Message);
             }
+        }
+    }
+
+    ///<Summary>
+    ///Handles what each gesture code should do.
+    /// </Summary>
+    private void HandleGesture(float code)
+    {
+        int codeInt = (int)code;
+        switch (codeInt)
+        {
+            case 0:
+                Debug.Log("No Gesture");
+                break;
+            case 1:
+                Debug.Log("Drag gesture detected");
+                break;
         }
     }
 

@@ -21,9 +21,17 @@ def render_video(cv, frame, face_center, gesture=None):
     cv.imshow('frame', frame)
     return frame
 
-def AspectRatioCalculator (width, height):
+def AspectRatioCalculator(width, height):
         ratio = width / height
         return ratio
+
+def gesture_to_code(gesture):
+    if gesture is None:
+        return 0.0
+    elif gesture == "drag":
+        return 1.0
+    else:
+        return -1.0
 
 def main():
     cap = cv.VideoCapture(0)
@@ -53,7 +61,8 @@ def main():
         
         if face_center is not None:
             face_x, face_y = face_center
-            message = struct.pack('ffff', face_x, face_y, aspect_ratio, distance)
+            gesture_code = gesture_to_code(gesture)
+            message = struct.pack('fffff', face_x, face_y, aspect_ratio, distance, gesture_code)
             clientSocket.sendto(message, address)
 
 
