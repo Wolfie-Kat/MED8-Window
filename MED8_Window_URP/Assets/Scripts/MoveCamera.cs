@@ -23,6 +23,8 @@ public class MoveCamera : MonoBehaviour
     [Range(0, 1)] public float WindowMovementWeight = 0.9f; // How much the PLANE moves
     [Range(0, 1)] public float HeadLeaningWeight = 0.1f;    // How much your HEAD moves relative to plane
     public float GlobalZScale = 0.05f;
+    
+    private Transform _headTransform;
 
     //----------------------------------------------------------------------------------------------------------//
     
@@ -30,6 +32,8 @@ public class MoveCamera : MonoBehaviour
     {
         if (projectionPlane != null)
             PlaneOrigin = projectionPlane.transform.position;
+        
+        _headTransform = transform;
     }
     
     // Functions
@@ -59,10 +63,15 @@ public class MoveCamera : MonoBehaviour
         projectionPlane.transform.position = new Vector3(PlaneOrigin.x, PlaneOrigin.y, planeZ);
 
         // Position the camera using the calibrated physical offsets
-        transform.position = projectionPlane.transform.position +
+        _headTransform.position = projectionPlane.transform.position +
                              (screen.DirRight * physicalX) + 
                              (screen.DirUp * physicalY) +
                              (screen.DirNormal * headZ);
+        
+        if (_projectionPlaneCamera != null)
+        {
+            _projectionPlaneCamera.HeadPosition = _headTransform;
+        }
     }
 
     
