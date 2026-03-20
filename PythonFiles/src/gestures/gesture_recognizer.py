@@ -45,8 +45,4 @@ class GestureRecognizer:
             if gesture != "None":
                 return gesture
 
-        if result.hand_landmarks:
-            if self._update_grab(result.hand_landmarks[0]):
-                return "Grab"
-
         return None

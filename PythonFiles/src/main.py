@@ -9,12 +9,15 @@ import struct
 
 IMAGE_RES = (1280,720)
 
-def render_video(cv, frame, face_center):
+def render_video(cv, frame, face_center, gesture=None):
     if face_center is not None:
         h, w = frame.shape[:2]
         cx = int(face_center[0] * w)
         cy = int(face_center[1] * h)
         cv.circle(frame, (cx, cy), 8, color=(0, 255, 0), thickness=-1)
+    if gesture is not None:
+        cv.putText(frame, f"Gesture: {gesture}", (10, 40),
+                   cv.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
     cv.imshow('frame', frame)
     return frame
 
@@ -48,18 +51,13 @@ def main():
         face_center, distance = landmarker.detect_faces(frame)
         gesture = gesture_recognizer.recognize_gesture(frame)
         
-        if gesture is not None:
-            print(f"Recognized gesture: {gesture}")
-
-        print(f"Estimated distance: {distance:.2f} cm" if distance is not None else "Distance estimation failed")
-
         if face_center is not None:
             face_x, face_y = face_center
             message = struct.pack('ffff', face_x, face_y, aspect_ratio, distance)
             clientSocket.sendto(message, address)
-        
-        
-        render_video(cv, frame, face_center)
+
+
+        render_video(cv, frame, face_center, gesture)
         if cv.waitKey(1) == ord('q'):
             break
     
