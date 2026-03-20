@@ -2,41 +2,55 @@ using UnityEngine;
 
 public class BlindsShutterMove : MonoBehaviour
 {
-    [Header("Blinds")]
-    public Transform[] slats;   // assign top -> bottom
-    public float moveSpeed = 1f;
+    [Header("Assign TOP → BOTTOM")]
+    public Transform[] slats;
 
-    [Header("Collapse Settings")]
-    public float collapsedSpacing = 0.02f; // spacing when stacked
-
+    [Header("Movement")]
+    public float liftSpeed = 0.6f;
     [Range(0f, 1f)]
-    public float openAmount = 0f; // 0 = down, 1 = collapsed
+    public float openAmount = 0f;
 
     float targetOpen;
 
-    Vector3[] startPositions;
+    float[] startY;
+    float[] slatHeights;
 
     void Start()
     {
-        startPositions = new Vector3[slats.Length];
+        int count = slats.Length;
 
-        for (int i = 0; i < slats.Length; i++)
-            startPositions[i] = slats[i].localPosition;
+        startY = new float[count];
+        slatHeights = new float[count];
+
+        // Record starting positions
+        for (int i = 0; i < count; i++)
+        {
+            startY[i] = slats[i].localPosition.y;
+
+            // Automatically measure slat thickness
+            Renderer r = slats[i].GetComponentInChildren<Renderer>();
+            if (r != null)
+                slatHeights[i] = r.bounds.size.y;
+            else
+                slatHeights[i] = 0.02f; // fallback
+        }
     }
 
     void Update()
     {
         // TEST INPUT
         if (Input.GetKey(KeyCode.W))
-            targetOpen += moveSpeed * Time.deltaTime;
+            targetOpen += liftSpeed * Time.deltaTime;
 
         if (Input.GetKey(KeyCode.S))
-            targetOpen -= moveSpeed * Time.deltaTime;
+            targetOpen -= liftSpeed * Time.deltaTime;
 
         targetOpen = Mathf.Clamp01(targetOpen);
 
-        // Smooth movement
-        openAmount = Mathf.MoveTowards(openAmount, targetOpen, moveSpeed * Time.deltaTime);
+        openAmount = Mathf.MoveTowards(
+            openAmount,
+            targetOpen,
+            liftSpeed * Time.deltaTime);
 
         UpdateSlats();
     }
@@ -45,37 +59,32 @@ public class BlindsShutterMove : MonoBehaviour
     {
         int count = slats.Length;
 
-        // where the stack begins (top slat reference)
-        float currentStackY = startPositions[0].y;
+        // stack starts at top slat original height
+        float stackY = startY[0];
 
         for (int i = 0; i < count; i++)
         {
-            float normalizedIndex = (float)i / (count - 1);
+            float normalized = (float)i / (count - 1);
 
-            // weight controls how fast each slat joins stack
-            float minWeight = 0.2f;
-            float weight = Mathf.Lerp(minWeight, 1f, normalizedIndex);
+            // bottom moves more than top
+            float weight = Mathf.Lerp(0.9f, 0.9f, normalized);
 
-            // how much this slat wants to rise
-            float lift = openAmount * weight;
-
-            Vector3 pos = startPositions[i];
-
-            // target lifted position (free movement)
-            float liftedY = Mathf.Lerp(
-                startPositions[i].y,
-                startPositions[0].y,
-                lift
+            // where slat WOULD like to go
+            float desiredY = Mathf.Lerp(
+                startY[i],
+                startY[0],
+                openAmount * weight
             );
 
-            // TRUE STACKING:
-            // slat cannot go higher than stack position
-            pos.y = Mathf.Min(liftedY, currentStackY);
+            // TRUE STACK CONSTRAINT
+            float finalY = Mathf.Min(desiredY, stackY);
 
+            Vector3 pos = slats[i].localPosition;
+            pos.y = finalY;
             slats[i].localPosition = pos;
 
-            // move stack downward by this slat's thickness
-            currentStackY -= collapsedSpacing;
+            // next slat must sit below this one
+            stackY = finalY - slatHeights[i];
         }
     }
 }
