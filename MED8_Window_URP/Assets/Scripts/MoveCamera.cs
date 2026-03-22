@@ -9,10 +9,12 @@ public class MoveCamera : MonoBehaviour
     [Header("1. Your Physical Setup (measure these)")]
     [Tooltip("Width of your physical monitor in centimeters. Measure it with a ruler.")]
     public float ScreenWidthCm = 60f;
+    [Tooltip("Height of your physical monitor in centimeters. Measure it with a ruler.")]
+    public float ScreenHeightCm = 34f;
     [Tooltip("How far you sit from your monitor in centimeters.")]
     public float SittingDistanceCm = 60f;
-    [Tooltip("Horizontal FOV of your webcam in degrees (most webcams: 60-70)")]
-    public float WebcamFOV = 60f;
+    [Tooltip("Horizontal FOV of your webcam in degrees. Read from the Python console on startup.")]
+    public float WebcamFOV = 65f;
 
     [Header("2. Tuning")]
     [Tooltip("How much head movement affects the view. Start at 1.0, lower if it feels too strong.")]
@@ -43,22 +45,22 @@ public class MoveCamera : MonoBehaviour
         if (screen == null) return;
 
         // World scale: how many scene units = 1 cm of real-world movement.
-        // If your screen is 60cm wide and ProjectionPlane.Size.x is 8,
-        // then 1cm of real head movement = 8/60 = 0.133 scene units.
-        float worldScale = screen.Size.x / ScreenWidthCm;
+        // Separate horizontal and vertical scales so any screen shape maps correctly.
+        float worldScaleH = screen.Size.x / ScreenWidthCm;
+        float worldScaleV = screen.Size.y / ScreenHeightCm;
 
         // Convert webcam normalized coordinates (0..1) to head offset in cm.
         // Perspective is linear in tan, not angle: offset = (0.5 - norm) * 2 * tan(fov/2) * distance
         float halfTanH = Mathf.Tan(WebcamFOV * 0.5f * Mathf.Deg2Rad);
-        float halfTanV = halfTanH / (screen.Size.x / screen.Size.y);
+        float halfTanV = halfTanH * ScreenHeightCm / ScreenWidthCm;
         float headXcm = (0.5f - gameManager.receivedValue.x) * 2f * halfTanH * SittingDistanceCm;
         float headYcm = (0.5f - gameManager.receivedValue.y) * 2f * halfTanV * SittingDistanceCm;
 
         // Target offset in scene units
         Vector3 target = new Vector3(
-            headXcm * worldScale * Sensitivity,
-            headYcm * worldScale * Sensitivity,
-            SittingDistanceCm * worldScale
+            headXcm * worldScaleH * Sensitivity,
+            headYcm * worldScaleV * Sensitivity,
+            SittingDistanceCm * worldScaleH
         );
 
         // Smooth
