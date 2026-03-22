@@ -48,11 +48,11 @@ public class MoveCamera : MonoBehaviour
         float worldScale = screen.Size.x / ScreenWidthCm;
 
         // Convert webcam normalized coordinates (0..1) to head offset in cm.
-        float verticalFOV = WebcamFOV / (16f / 9f);
-        float angleX = (0.5f - gameManager.receivedValue.x) * WebcamFOV;
-        float angleY = (0.5f - gameManager.receivedValue.y) * verticalFOV;
-        float headXcm = Mathf.Tan(angleX * Mathf.Deg2Rad) * SittingDistanceCm;
-        float headYcm = Mathf.Tan(angleY * Mathf.Deg2Rad) * SittingDistanceCm;
+        // Perspective is linear in tan, not angle: offset = (0.5 - norm) * 2 * tan(fov/2) * distance
+        float halfTanH = Mathf.Tan(WebcamFOV * 0.5f * Mathf.Deg2Rad);
+        float halfTanV = halfTanH / (screen.Size.x / screen.Size.y);
+        float headXcm = (0.5f - gameManager.receivedValue.x) * 2f * halfTanH * SittingDistanceCm;
+        float headYcm = (0.5f - gameManager.receivedValue.y) * 2f * halfTanV * SittingDistanceCm;
 
         // Target offset in scene units
         Vector3 target = new Vector3(

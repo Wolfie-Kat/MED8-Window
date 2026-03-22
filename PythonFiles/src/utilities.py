@@ -1,3 +1,17 @@
+import math
+import pickle
+import os
+
+CALIBRATION_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), 'src', 'calibration', 'output', 'calibration_data.pkl'
+)
+
+
+def calculate_camera_fov(frame_width):
+    with open(CALIBRATION_PATH, 'rb') as f:
+        data = pickle.load(f)
+        fx = data['camera_matrix'][0, 0]
+    return 2 * math.degrees(math.atan(frame_width / (2 * fx)))
 
 
 class Utilities:
