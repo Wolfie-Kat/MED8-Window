@@ -1,47 +1,25 @@
+import math
+import pickle
+import os
+
+CALIBRATION_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), 'src', 'calibration', 'output', 'calibration_data.pkl'
+)
+
+
+def calculate_camera_fov(frame_width):
+    with open(CALIBRATION_PATH, 'rb') as f:
+        data = pickle.load(f)
+        fx = data['camera_matrix'][0, 0]
+    return 2 * math.degrees(math.atan(frame_width / (2 * fx)))
 
 
 class Utilities:
     @staticmethod
-    def normalize_face_position(screen_x, screen_y, bbox):
-        if bbox is None:
-            return 0.5, 0.5
-        
-        x, y, w, h = bbox
-        face_x = x + w / 2
-        face_y = y + h / 2
-        
-        normalized_x = face_x / screen_x
-        normalized_y = face_y / screen_y
-        return normalized_x, normalized_y
+    def get_face_center(landmarks):
+        """Get normalized face center directly from the nose tip landmark."""
+        if landmarks is None:
+            return None
+        # Average of left eye (159) and right eye (386) inner landmarks
+        return (landmarks[159].x + landmarks[386].x) / 2, (landmarks[159].y + landmarks[386].y) / 2
     
-    @staticmethod
-    def get_bbox_from_landmarks(landmarks, screen_x, screen_y):
-        if landmarks is not None:
-            h, w = screen_y, screen_x
-            
-            x1, y1 = int(landmarks[10].x * w), int(landmarks[10].y * h)   # forehead
-            x2, y2 = int(landmarks[152].x * w), int(landmarks[152].y * h) # chin
-            x3, y3 = int(landmarks[234].x * w), int(landmarks[234].y * h) # left ear
-            x4, y4 = int(landmarks[454].x * w), int(landmarks[454].y * h) # right ear
-            
-            x = min(x1, x2, x3, x4)
-            y = min(y1, y2, y3, y4)
-            width = max(x1, x2, x3, x4) - x
-            height = max(y1, y2, y3, y4) - y
-            
-            return (x, y, width, height)
-        
-        return None
-    
-    @staticmethod
-    def get_bbox_from_detections(detections, screen_x, screen_y):
-        if len(detections) > 0:
-            detection = detections[0]
-            bbox = detection.bounding_box
-            x = int(bbox.origin_x)
-            y = int(bbox.origin_y)
-            width = int(bbox.width)
-            height = int(bbox.height)
-            return (x, y, width, height)
-        
-        return None

@@ -1,6 +1,4 @@
 ﻿<Solution>
-  <Project Path="Gsplat.csproj" />
-  <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
-  <Project Path="Gsplat.Editor.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
 </Solution>

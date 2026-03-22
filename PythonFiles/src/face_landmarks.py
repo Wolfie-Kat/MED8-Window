@@ -8,9 +8,12 @@ from mediapipe.tasks.python import vision
 from utilities import Utilities
 import os
 
-path= os.path.join(os.path.dirname(os.path.dirname(__file__)),'face_landmarker.task')
+path= os.path.join(os.path.dirname(os.path.dirname(__file__)),'models', 'face_landmarker.task')
 base_options = python.BaseOptions(model_asset_path=path)
 
+GESTURE_MODEL_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), 'models', 'gesture_recognizer.task'
+)   
 CALIBRATION_PATH = os.path.join(
     os.path.dirname(os.path.dirname(__file__)),'src', 'calibration', 'output', 'calibration_data.pkl'
 )
@@ -25,6 +28,13 @@ options = vision.FaceLandmarkerOptions(
     min_tracking_confidence=0.5,
     running_mode=mp.tasks.vision.RunningMode.VIDEO
 )
+
+gesture_options = vision.GestureRecognizerOptions(
+    base_options=python.BaseOptions(model_asset_path=GESTURE_MODEL_PATH),
+    running_mode=mp.tasks.vision.RunningMode.VIDEO
+)
+
+
 
 class FaceLandmarker:
     def __init__(self):
@@ -65,9 +75,9 @@ class FaceLandmarker:
 
         if landmarks is not None:
             h, w = frame.shape[:2]
-            bbox = Utilities.get_bbox_from_landmarks(landmarks, w, h)
+            face_center = Utilities.get_face_center(landmarks)
             distance = self.estimate_distance(landmarks, w, h)
-            return bbox, distance
+            return face_center, distance
 
         return None, None
     
