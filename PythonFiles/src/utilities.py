@@ -7,11 +7,19 @@ CALIBRATION_PATH = os.path.join(
 )
 
 
-def calculate_camera_fov(frame_width):
+def load_calibration_data():
     with open(CALIBRATION_PATH, 'rb') as f:
-        data = pickle.load(f)
-        fx = data['camera_matrix'][0, 0]
-    return 2 * math.degrees(math.atan(frame_width / (2 * fx)))
+        return pickle.load(f)
+
+
+def calculate_camera_fov(frame_width):
+    data = load_calibration_data()
+    fx = data['camera_matrix'][0, 0]
+    cal_w = data.get('image_width', frame_width)
+    # Scale fx to match current frame resolution
+    scale = frame_width / cal_w
+    fx_scaled = fx * scale
+    return 2 * math.degrees(math.atan(frame_width / (2 * fx_scaled)))
 
 
 class Utilities:

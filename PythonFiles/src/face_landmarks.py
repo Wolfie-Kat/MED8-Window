@@ -1,11 +1,9 @@
-import pickle
-
 import cv2 as cv
 import numpy as np
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-from utilities import Utilities
+from utilities import Utilities, load_calibration_data
 import os
 
 path= os.path.join(os.path.dirname(os.path.dirname(__file__)),'models', 'face_landmarker.task')
@@ -13,9 +11,6 @@ base_options = python.BaseOptions(model_asset_path=path)
 
 GESTURE_MODEL_PATH = os.path.join(
     os.path.dirname(os.path.dirname(__file__)), 'models', 'gesture_recognizer.task'
-)   
-CALIBRATION_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)),'src', 'calibration', 'output', 'calibration_data.pkl'
 )
 REAL_FACE_WIDTH_CM = 14.2
 
@@ -40,13 +35,11 @@ class FaceLandmarker:
     def __init__(self):
         self.face_landmarker = vision.FaceLandmarker.create_from_options(options)
         self.frame_timestamp = 0
-        self.fx = self.load_focal_length()
-
-    def load_focal_length(self):
-        with open(CALIBRATION_PATH, 'rb') as f:
-            data = pickle.load(f)
-            # fx from the camera matrix
-            return data['camera_matrix'][0, 0]
+        data = load_calibration_data()
+        self.fx = data['camera_matrix'][0, 0]
+        self.cal_width = data.get('image_width')
+        self._fx_scaled = None
+        self._last_frame_width = None
     
     def detect_landmarks(self, frame):
         rgb_frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
@@ -60,6 +53,15 @@ class FaceLandmarker:
         
         return None
 
+    def _get_scaled_fx(self, frame_width):
+        if frame_width != self._last_frame_width:
+            self._last_frame_width = frame_width
+            if self.cal_width is not None:
+                self._fx_scaled = self.fx * (frame_width / self.cal_width)
+            else:
+                self._fx_scaled = self.fx
+        return self._fx_scaled
+
     def estimate_distance(self, landmarks, frame_width, frame_height):
         left = np.array([landmarks[234].x * frame_width, landmarks[234].y * frame_height])
         right = np.array([landmarks[454].x * frame_width, landmarks[454].y * frame_height])
@@ -68,7 +70,8 @@ class FaceLandmarker:
         if face_width_px < 1.0:
             return 0
 
-        return (REAL_FACE_WIDTH_CM * self.fx) / face_width_px
+        fx = self._get_scaled_fx(frame_width)
+        return (REAL_FACE_WIDTH_CM * fx) / face_width_px
 
     def detect_faces(self, frame):
         landmarks = self.detect_landmarks(frame)
