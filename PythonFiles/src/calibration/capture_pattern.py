@@ -8,8 +8,6 @@ CAMERA_ID = 0  # Camera ID (usually 0 for built-in webcam)
 CHESSBOARD_SIZE = (8, 5)  # Inner corners = squares - 1 in each dimension
 OUTPUT_DIRECTORY = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'calibration', 'calibration_images')  # Directory to save calibration images
 
-IMAGE_RES = (1280,720)
-
 
 
 def capture_calibration_images():
@@ -21,13 +19,9 @@ def capture_calibration_images():
     # Create output directory if it doesn't exist
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
-    
-    # Open camera
-    cap = cv2.VideoCapture(CAMERA_ID)
 
-    # Set width and height
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMAGE_RES[0])
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMAGE_RES[1])
+    # Open camera (uses native camera resolution)
+    cap = cv2.VideoCapture(CAMERA_ID)
     
     if not cap.isOpened():
         print(f"Error: Could not open camera {CAMERA_ID}")
