@@ -49,6 +49,7 @@ def main():
         print("Cannot open camera")
         exit()
 
+    gesture_start_position = (-1.0, -1.0, -1.0)
     while True:
         ret, frame = cap.read()
 
@@ -58,11 +59,19 @@ def main():
 
         face_center, distance = landmarker.detect_faces(frame)
         gesture = gesture_recognizer.recognize_gesture(frame)
+        gesture_position = gesture_recognizer.get_gesture_position(frame)
+
+        if gesture == "drag":
+            if gesture_start_position is (-1.0, -1.0, -1.0):
+                gesture_start_position = gesture_position
+        else:
+            gesture_start_position = (-1.0, -1.0, -1.0)
         
         if face_center is not None:
             face_x, face_y = face_center
             gesture_code = gesture_to_code(gesture)
-            message = struct.pack('fffff', face_x, face_y, aspect_ratio, distance, gesture_code)
+            print (gesture_start_position[1], gesture_position[1])
+            message = struct.pack('fffffff', face_x, face_y, aspect_ratio, distance, gesture_code, gesture_start_position[1], gesture_position[1])
             clientSocket.sendto(message, address)
 
 
