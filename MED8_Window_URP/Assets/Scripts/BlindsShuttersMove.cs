@@ -1,12 +1,10 @@
 using UnityEngine;
 
-/// <summary>
-/// Controls lifting and tilting behaviour of window blind slats.
-/// </summary>
+/// <summary>Controls lifting and tilting behaviour of window blind slats.</summary>
 public class BlindsShutterMove : MonoBehaviour
 {
-    // Slats ordered TOP → BOTTOM
-    [Header("Assign TOP → BOTTOM")]
+    // Slats ordered TOP to BOTTOM
+    [Header("Assign TOP to BOTTOM")]
     public Transform[] slats;
 
     // ---------- Movement ----------
@@ -15,7 +13,7 @@ public class BlindsShutterMove : MonoBehaviour
     // Speed of lifting motion
     public float liftSpeed = 0.6f;
 
-    // 0 = closed, 1 = fully lifted
+    // 0 = closed, 1 = lifted
     [Range(0f, 1f)]
     public float openAmount = 0f;
 
@@ -25,29 +23,27 @@ public class BlindsShutterMove : MonoBehaviour
     // Original Y positions of slats
     float[] startY;
 
-    // Measured slat thickness
+    // Slat thickness
     float[] slatHeights;
 
     // ---------- Tilt ----------
     [Header("Tilt")]
 
     // Tilt rotation speed
-    public float tiltSpeed = 120f;
+    public float tiltSpeed = 1f;
 
     // 0–1 tilt control
     [Range(0f,1f)]
     public float tiltAmount = 0.5f;
 
     // Tilt angle limits
-    public float minTiltX = -160f;
-    public float maxTiltX = -20f;
+    public float minTiltX = -175f;
+    public float maxTiltX = -5f;
 
     // Smoothed tilt target
     float targetTilt;
 
-    /// <summary>
-    /// Records initial slat positions and measures their thickness.
-    /// </summary>
+    // ----------------------- Initialization -------------------------//
     void Start()
     {
         int count = slats.Length;
@@ -71,52 +67,33 @@ public class BlindsShutterMove : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Handles input and smoothly updates lift and tilt values.
-    /// </summary>
+    // ----------------------- Update Loop -------------------------//
     void Update()
     {
-        // ----- Lift input (testing) -----
-        if (Input.GetKey(KeyCode.W))
-            targetOpen += liftSpeed * Time.deltaTime;
-
-        if (Input.GetKey(KeyCode.S))
-            targetOpen -= liftSpeed * Time.deltaTime;
-
-        targetOpen = Mathf.Clamp01(targetOpen);
-
-        // Smooth toward target
+        // Lifting
         openAmount = Mathf.MoveTowards(
             openAmount,
             targetOpen,
             liftSpeed * Time.deltaTime
         );
 
-        // ----- Tilt input (testing) -----
-        if (Input.GetKey(KeyCode.D))
-            targetTilt += tiltSpeed * Time.deltaTime / 180f;
-
-        if (Input.GetKey(KeyCode.A))
-            targetTilt -= tiltSpeed * Time.deltaTime / 180f;
-
-        targetTilt = Mathf.Clamp01(targetTilt);
-
+        // Tilting
         tiltAmount = Mathf.MoveTowards(
             tiltAmount,
             targetTilt,
-            tiltSpeed * Time.deltaTime / 180f
+            tiltSpeed * Time.deltaTime
         );
 
         // Apply updates
-        UpdateSlats();
+        UpdateMovement();
         UpdateTilt();
     }
 
-    /// <summary>
-    /// Moves slats upward while enforcing stacking constraints.
-    /// Prevents slats from intersecting.
-    /// </summary>
-    void UpdateSlats()
+    //----------------------- Movement & Stacking -------------------------//
+
+    /// <summary>Moves slats upward while enforcing stacking constraints.
+    /// Prevents slats from intersecting.</summary>
+    void UpdateMovement()
     {
         int count = slats.Length;
 
@@ -125,7 +102,7 @@ public class BlindsShutterMove : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            // Normalized index (top → bottom)
+            // Normalized index top to bottom
             float normalized = (float)i / (count - 1);
 
             // Movement weighting
@@ -150,9 +127,7 @@ public class BlindsShutterMove : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Tilts slats and reduces tilt as blinds are lifted.
-    /// </summary>
+    /// <summary>Tilts slats and reduces tilt as blinds are lifted.</summary>
     void UpdateTilt()
     {
         // Tilt influence decreases when opening
@@ -170,9 +145,8 @@ public class BlindsShutterMove : MonoBehaviour
         // Reduce tilt toward neutral
         float tiltX = Mathf.Lerp(neutralTilt, baseTiltX, tiltStrength);
 
-        // Fixed Y/Z keeps orientation stable
-        Quaternion targetRotation =
-            Quaternion.Euler(tiltX, 90f, -90f);
+        // Keep Y and Z fixed for slat rotation
+        Quaternion targetRotation = Quaternion.Euler(tiltX, 90f, -90f);
 
         // Apply to all slats except bottom rod
         for (int i = 0; i < slats.Length - 1; i++)
@@ -180,4 +154,68 @@ public class BlindsShutterMove : MonoBehaviour
             slats[i].localRotation = targetRotation;
         }
     }
+
+    // Receives lift value from external source (Python). Expected range: 0–1
+    public void SetOpenAmount(float value)
+    {
+        targetOpen = Mathf.Clamp01(value);
+    }
+
+    // Receives tilt value from external source (Python). Expected range: 0–1
+    public void SetTiltAmount(float value)
+    {
+        targetTilt = Mathf.Clamp01(value);
+    }
+    
+    // Convenience function for updating both values.
+    public void SetBlinds(float open, float tilt)
+    {
+        targetOpen = Mathf.Clamp01(open);
+        targetTilt = Mathf.Clamp01(tilt);
+    }
 }
+
+
+
+//-------------------------------------------------------------------//
+//----------------TEMPORARY OLD CODE STORAGE-------------------------//
+//-------------------------------------------------------------------//
+
+
+// void Update()
+//     {
+//         // ----- Lift input (testing) -----
+//         if (Input.GetKey(KeyCode.W))
+//             targetOpen += liftSpeed * Time.deltaTime;
+
+//         if (Input.GetKey(KeyCode.S))
+//             targetOpen -= liftSpeed * Time.deltaTime;
+
+//         targetOpen = Mathf.Clamp01(targetOpen);
+
+//         // Smooth toward target
+//         openAmount = Mathf.MoveTowards(
+//             openAmount,
+//             targetOpen,
+//             liftSpeed * Time.deltaTime
+//         );
+
+//         // ----- Tilt input (testing) -----
+//         if (Input.GetKey(KeyCode.D))
+//             targetTilt += tiltSpeed * Time.deltaTime;
+
+//         if (Input.GetKey(KeyCode.A))
+//             targetTilt -= tiltSpeed * Time.deltaTime;
+
+//         targetTilt = Mathf.Clamp01(targetTilt);
+
+//         tiltAmount = Mathf.MoveTowards(
+//             tiltAmount,
+//             targetTilt,
+//             tiltSpeed * Time.deltaTime
+//         );
+
+//         // Apply updates
+//         UpdateMovement();
+//         UpdateTilt();
+//     }
