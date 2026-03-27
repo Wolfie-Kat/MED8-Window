@@ -73,7 +73,7 @@ public class UnityPythonConnector : MonoBehaviour
             try
             {
                 byte[] data = _udpClient.Receive(ref anyIP);
-                if (data.Length >= 20)
+                if (data.Length >= 28)
                 {
                     _latestX = BitConverter.ToSingle(data, 0);
                     _latestY = BitConverter.ToSingle(data, 4);

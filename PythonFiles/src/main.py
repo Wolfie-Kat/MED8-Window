@@ -26,7 +26,7 @@ def AspectRatioCalculator(width, height):
         return ratio
 
 def gesture_to_code(gesture):
-    if gesture is None:
+    if gesture == "none":
         return 0.0
     elif gesture == "drag":
         return 1.0
@@ -62,6 +62,9 @@ def main():
         gesture_position = gesture_recognizer.get_gesture_position(frame)
 
         if gesture == "drag":
+            if gesture_start_position is (-1.0, -1.0, -1.0):
+                gesture_start_position = gesture_position
+        elif gesture == "none":
             if gesture_start_position is (-1.0, -1.0, -1.0):
                 gesture_start_position = gesture_position
         else:

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 /// <summary>Controls lifting and tilting behaviour of window blind slats.</summary>
@@ -9,9 +10,6 @@ public class BlindsShutterMove : MonoBehaviour
 
     // ---------- Movement ----------
     [Header("Movement")]
-
-    // Speed of lifting motion
-    public float liftSpeed = 0.6f;
 
     // 0 = closed, 1 = lifted
     [Range(0f, 1f)]
@@ -35,13 +33,17 @@ public class BlindsShutterMove : MonoBehaviour
     // 0–1 tilt control
     [Range(0f,1f)]
     public float tiltAmount = 0.5f;
-
     // Tilt angle limits
     public float minTiltX = -175f;
     public float maxTiltX = -5f;
-
     // Smoothed tilt target
     float targetTilt;
+
+    // ---------- External Input ----------
+    [Header("External Input")]
+    [SerializeField] private UnityPythonConnector _pythonConnector;
+    bool gestureActive = false;
+    float gestureStartOpen;   // blinds position when gesture begins
 
     // ----------------------- Initialization -------------------------//
     void Start()
@@ -71,10 +73,38 @@ public class BlindsShutterMove : MonoBehaviour
     void Update()
     {
         // Lifting
+        bool validGesture =
+            _pythonConnector.GesturePosition > -0.5f &&
+            _pythonConnector.GestureStartPosition > -0.5f &&
+            _pythonConnector.gesture >= 0.0f;
+
+        // Gesture just started
+        if (validGesture && !gestureActive)
+        {
+            gestureActive = true;
+            gestureStartOpen = openAmount; // remember blinds position
+        }
+
+        // Gesture ended
+        if (!validGesture)
+        {
+            gestureActive = false;
+        }
+
+        // Apply relative movement when gesture is active
+        if (gestureActive)
+        {
+            float delta =
+                _pythonConnector.GestureStartPosition -
+                _pythonConnector.GesturePosition;
+
+            targetOpen = Mathf.Clamp01(gestureStartOpen + delta);
+        }
+
         openAmount = Mathf.MoveTowards(
             openAmount,
             targetOpen,
-            liftSpeed * Time.deltaTime
+            Time.deltaTime
         );
 
         // Tilting
@@ -87,6 +117,7 @@ public class BlindsShutterMove : MonoBehaviour
         // Apply updates
         UpdateMovement();
         UpdateTilt();
+        print(targetOpen);
     }
 
     //----------------------- Movement & Stacking -------------------------//
