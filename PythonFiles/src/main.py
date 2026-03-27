@@ -23,6 +23,18 @@ def render_video(cv, frame, face_center, gesture=None, fov=None):
     cv.imshow('frame', frame)
     return frame
 
+def AspectRatioCalculator(width, height):
+        ratio = width / height
+        return ratio
+
+def gesture_to_code(gesture):
+    if gesture == "none":
+        return 0.0
+    elif gesture == "drag":
+        return 1.0
+    else:
+        return -1.0
+
 def main():
     cap = cv.VideoCapture(0)
 
@@ -36,6 +48,7 @@ def main():
         print("Cannot open camera")
         exit()
 
+    gesture_start_position = (-1.0, -1.0, -1.0)
     fov = None
     aspect_ratio = None
 
@@ -53,10 +66,23 @@ def main():
 
         face_center, distance = landmarker.detect_faces(frame)
         gesture = gesture_recognizer.recognize_gesture(frame)
+        gesture_position = gesture_recognizer.get_gesture_position(frame)
+
+        if gesture == "drag":
+            if gesture_start_position is (-1.0, -1.0, -1.0):
+                gesture_start_position = gesture_position
+        elif gesture == "none":
+            if gesture_start_position is (-1.0, -1.0, -1.0):
+                gesture_start_position = gesture_position
+        else:
+            gesture_start_position = (-1.0, -1.0, -1.0)
+        
 
         if face_center is not None:
             face_x, face_y = face_center
-            message = struct.pack('ffff', face_x, face_y, aspect_ratio, distance)
+            gesture_code = gesture_to_code(gesture)
+            print (gesture_start_position[1], gesture_position[1])
+            message = struct.pack('fffffff', face_x, face_y, aspect_ratio, distance, gesture_code, gesture_start_position[1], gesture_position[1])
             clientSocket.sendto(message, address)
 
 

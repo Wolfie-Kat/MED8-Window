@@ -46,3 +46,49 @@ class GestureRecognizer:
                 return gesture
 
         return None
+
+    def get_gesture_position(self, frame):
+        """
+        Get the position of the hand gesture.
+        Returns a tuple (x, y, z) normalized coordinates or None if no hand is detected
+        """
+        rgb_frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+        self.frame_timestamp += 1
+        result = self.recognizer.recognize_for_video(mp_image, self.frame_timestamp)
+
+        # Check if hand landmarks are available
+        if result.hand_landmarks and len(result.hand_landmarks) > 0:
+            # Get first hand detected
+            hand_landmarks = result.hand_landmarks[0]
+
+            # Get wrist position (landmark 0) as reference point
+            wrist = hand_landmarks[0]
+
+            position = (wrist.x, wrist.y, wrist.z)
+
+            self._update_grab(hand_landmarks)
+
+            return position
+        
+        return (-1.0, -1.0, -1.0)
+
+    def normalize_vertical_movement(self, current_y, start_y, max_distance=0.5):
+        """
+        Normalize vertical movement (up/down) from start position to 0-1 range.
+    
+        Args:
+            current_y: Current y coordinate (0-1)
+            start_y: Starting y coordinate (0-1)
+            max_distance: Maximum expected movement distance (default 0.5)
+        
+        Returns:
+            Float in [0, 1] where:
+            0 = max movement up from start
+            0.5 = at start position
+            1 = max movement down from start
+        """
+        y_offset = current_y - start_y
+        normalized = (y_offset / max_distance + 1) / 2
+        return max(0.0, min(1.0, normalized))
+    
