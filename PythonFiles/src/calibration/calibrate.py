@@ -89,13 +89,16 @@ def calibrate_camera():
         objpoints, imgpoints, gray.shape[::-1], None, None
     )
     
-    # Save calibration results
+    # Save calibration results (include image size so fx can be scaled at runtime)
+    cal_h, cal_w = gray.shape[:2]
     calibration_data = {
         'camera_matrix': mtx,
         'distortion_coefficients': dist,
         'rotation_vectors': rvecs,
         'translation_vectors': tvecs,
-        'reprojection_error': ret
+        'reprojection_error': ret,
+        'image_width': cal_w,
+        'image_height': cal_h
     }
     
     with open(os.path.join(OUTPUT_DIRECTORY, 'calibration_data.pkl'), 'wb') as f:
