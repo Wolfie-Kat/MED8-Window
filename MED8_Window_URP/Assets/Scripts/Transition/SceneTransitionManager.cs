@@ -51,7 +51,7 @@ public class SceneTransitionManager : MonoBehaviour
         _isTransitioning = true;
 
         // Step 1: Slide panel IN until screen is fully black
-        float startX = goingLeft ? _screenWidth * 1.5f : -_screenWidth * 1.5f;
+        float startX = goingLeft ? -_screenWidth * 1.5f : _screenWidth * 1.5f;
         yield return StartCoroutine(SlidePanel(startX, 0f));
 
         // Step 2: Screen is now fully black — start loading
@@ -68,7 +68,7 @@ public class SceneTransitionManager : MonoBehaviour
             yield return null;
 
         // Step 5: Slide panel OUT to reveal new scene
-        float endX = goingLeft ? -_screenWidth * 1.5f : _screenWidth * 1.5f;
+        float endX = goingLeft ? _screenWidth * 1.5f : -_screenWidth * 1.5f;
         yield return StartCoroutine(SlidePanel(0f, endX));
 
         _isTransitioning = false;

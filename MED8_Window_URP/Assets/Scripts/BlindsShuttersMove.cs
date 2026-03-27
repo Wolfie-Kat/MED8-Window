@@ -74,8 +74,10 @@ public class BlindsShutterMove : MonoBehaviour
     {
         // Lifting
         bool validGesture =
-            _pythonConnector.GesturePosition > -0.5f &&
-            _pythonConnector.GestureStartPosition > -0.5f &&
+            _pythonConnector.GesturePositionY > -0.5f &&
+            _pythonConnector.GestureStartPositionY > -0.5f &&
+            _pythonConnector.GesturePositionX > -0.5f &&
+            _pythonConnector.GestureStartPositionX > -0.5f &&
             _pythonConnector.gesture >= 0.0f;
 
         // Gesture just started
@@ -94,11 +96,23 @@ public class BlindsShutterMove : MonoBehaviour
         // Apply relative movement when gesture is active
         if (gestureActive)
         {
-            float delta =
-                _pythonConnector.GestureStartPosition -
-                _pythonConnector.GesturePosition;
+            float deltaY =
+                _pythonConnector.GestureStartPositionY -
+                _pythonConnector.GesturePositionY;
 
-            targetOpen = Mathf.Clamp01(gestureStartOpen + delta);
+            targetOpen = Mathf.Clamp01(gestureStartOpen + deltaY);
+            
+            float deltaX =
+                _pythonConnector.GesturePositionX -
+                _pythonConnector.GestureStartPositionX;
+            if (deltaX >= 0.3f)
+            {
+                SceneTransitionManager.Instance.GoToNextScene();
+            }
+            if (deltaX <= -0.3f)
+            {
+                SceneTransitionManager.Instance.GoToPreviousScene();
+            }
         }
 
         openAmount = Mathf.MoveTowards(

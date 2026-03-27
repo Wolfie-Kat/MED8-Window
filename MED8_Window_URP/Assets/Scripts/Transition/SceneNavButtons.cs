@@ -13,8 +13,8 @@ public class SceneNavButtons : MonoBehaviour
         rightButton.onClick.AddListener(OnRightClicked);
     }
     void Start()
-    {
-
+    {   
+        DontDestroyOnLoad(gameObject);
         UpdateButtonVisibility();
     }
 

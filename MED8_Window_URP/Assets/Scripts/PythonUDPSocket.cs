@@ -19,14 +19,16 @@ public class UnityPythonConnector : MonoBehaviour
     public float _FOV;
     public float distance;
     public float gesture;
-    public float GestureStartPosition;
-    public float GesturePosition;
+    public float GestureStartPositionX;
+    public float GesturePositionX;
+    public float GestureStartPositionY;
+    public float GesturePositionY;
     [SerializeField] private volatile bool hasNewData = false;
     [SerializeField] private float recenterTimeLimit;
     [SerializeField] private float timer;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
-    {
+    {  
         InitializeUDP();
     }
 
@@ -73,15 +75,17 @@ public class UnityPythonConnector : MonoBehaviour
             try
             {
                 byte[] data = _udpClient.Receive(ref anyIP);
-                if (data.Length >= 28)
+                if (data.Length >= 36)
                 {
                     _latestX = BitConverter.ToSingle(data, 0);
                     _latestY = BitConverter.ToSingle(data, 4);
                     _FOV = BitConverter.ToSingle(data, 8);
                     distance = BitConverter.ToSingle(data, 12);
                     gesture = BitConverter.ToSingle(data, 16);
-                    GestureStartPosition = BitConverter.ToSingle(data, 20);
-                    GesturePosition = BitConverter.ToSingle(data, 24);
+                    GestureStartPositionX = BitConverter.ToSingle(data, 20);
+                    GesturePositionX = BitConverter.ToSingle(data, 24);
+                    GestureStartPositionY = BitConverter.ToSingle(data, 28);
+                    GesturePositionY = BitConverter.ToSingle(data, 32);
                     HandleGesture(gesture);
                     hasNewData = true;
                 }
