@@ -19,6 +19,8 @@ public class UnityPythonConnector : MonoBehaviour
     public float _FOV;
     public float distance;
     public float gesture;
+    public float GestureStartPosition;
+    public float GesturePosition;
     [SerializeField] private volatile bool hasNewData = false;
     [SerializeField] private float recenterTimeLimit;
     [SerializeField] private float timer;
@@ -78,6 +80,8 @@ public class UnityPythonConnector : MonoBehaviour
                     _FOV = BitConverter.ToSingle(data, 8);
                     distance = BitConverter.ToSingle(data, 12);
                     gesture = BitConverter.ToSingle(data, 16);
+                    GestureStartPosition = BitConverter.ToSingle(data, 20);
+                    GesturePosition = BitConverter.ToSingle(data, 24);
                     HandleGesture(gesture);
                     hasNewData = true;
                 }
