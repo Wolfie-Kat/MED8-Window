@@ -81,8 +81,17 @@ def main():
         if face_center is not None:
             face_x, face_y = face_center
             gesture_code = gesture_to_code(gesture)
-            print (gesture_start_position[1], gesture_position[1])
-            message = struct.pack('fffffff', face_x, face_y, aspect_ratio, distance, gesture_code, gesture_start_position[1], gesture_position[1])
+            print (f"Gesture start position: {round(gesture_start_position[0], 2), round(gesture_start_position[1], 2)}, Gesture position: {round(gesture_position[0], 2), round(gesture_position[1], 2)}")
+            message = struct.pack('fffffffff', 
+                                  face_x, 
+                                  face_y, 
+                                  aspect_ratio, 
+                                  distance, 
+                                  gesture_code, 
+                                  gesture_start_position[0], 
+                                  gesture_position[0], 
+                                  gesture_start_position[1], 
+                                  gesture_position[1])
             clientSocket.sendto(message, address)
 
 
