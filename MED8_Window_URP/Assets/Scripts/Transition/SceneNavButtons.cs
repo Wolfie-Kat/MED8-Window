@@ -14,8 +14,10 @@ public class SceneNavButtons : MonoBehaviour
     }
     void Start()
     {   
-        DontDestroyOnLoad(gameObject);
-        UpdateButtonVisibility();
+        // DontDestroyOnLoad(gameObject);
+        // UpdateButtonVisibility();
+        leftButton.gameObject.SetActive(false);
+        rightButton.gameObject.SetActive(false);
     }
 
     private void OnLeftClicked()

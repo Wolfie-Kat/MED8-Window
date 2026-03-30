@@ -13,7 +13,7 @@ public class BlindsShutterMove : MonoBehaviour
 
     // 0 = closed, 1 = lifted
     [Range(0f, 1f)]
-    public float openAmount = 0f;
+    public float openAmount = 1f;
 
     // Smoothed target value
     float targetOpen;
@@ -198,25 +198,6 @@ public class BlindsShutterMove : MonoBehaviour
         {
             slats[i].localRotation = targetRotation;
         }
-    }
-
-    // Receives lift value from external source (Python). Expected range: 0–1
-    public void SetOpenAmount(float value)
-    {
-        targetOpen = Mathf.Clamp01(value);
-    }
-
-    // Receives tilt value from external source (Python). Expected range: 0–1
-    public void SetTiltAmount(float value)
-    {
-        targetTilt = Mathf.Clamp01(value);
-    }
-    
-    // Convenience function for updating both values.
-    public void SetBlinds(float open, float tilt)
-    {
-        targetOpen = Mathf.Clamp01(open);
-        targetTilt = Mathf.Clamp01(tilt);
     }
 }
 

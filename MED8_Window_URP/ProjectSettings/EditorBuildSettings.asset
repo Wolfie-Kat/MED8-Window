@@ -5,18 +5,24 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Samuel/A-Scene.unity
     guid: 91016f28b52ba314ab4ec654c9492ae6
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Samuel/B-Scene.unity
     guid: 13f1edf53db254553a113eeda91c851c
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Samuel/C-Scene.unity
     guid: 11eac289931544399a68b14620ade8cb
   - enabled: 1
     path: Assets/Scenes/Katrine Blinds.unity
     guid: e9f1bcbd8f5873542bfded457f7d702b
+  - enabled: 1
+    path: Assets/Scenes/Switchscenes/NYC Midtown.unity
+    guid: f25c32b85228cc84792f09e3bf4e20a4
+  - enabled: 1
+    path: Assets/Scenes/Switchscenes/NYC Rooftop.unity
+    guid: 5a27bbaef653ad74b89d3a0f06847fab
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
