@@ -82,5 +82,6 @@ __pycache__/
 .DS_Store
 PythonFiles/src/calibration/calibration_images
 PythonFiles/src/calibration/output
+PythonFiles/src/video_segments
 
 # End of https://www.toptal.com/developers/gitignore/api/unity
