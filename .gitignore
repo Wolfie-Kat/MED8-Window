@@ -83,5 +83,6 @@ __pycache__/
 PythonFiles/src/calibration/calibration_images
 PythonFiles/src/calibration/output
 PythonFiles/src/video_segments
+PythonFiles/src/gestures/gesture_dataset
 
 # End of https://www.toptal.com/developers/gitignore/api/unity
