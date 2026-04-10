@@ -41,6 +41,12 @@ def gesture_to_code(gesture):
         return 0.0
     elif gesture == "drag":
         return 1.0
+    elif gesture == "hold":
+        return 2.0
+    elif gesture == "palm":
+        return 3.0
+    elif gesture == "ok":
+        return 4.0
     else:
         return -1.0
     
@@ -99,6 +105,15 @@ def main():
             if gesture_start_position is (-1.0, -1.0, -1.0):
                 gesture_start_position = gesture_position
         elif gesture == "none":
+            if gesture_start_position is (-1.0, -1.0, -1.0):
+                gesture_start_position = gesture_position
+        elif gesture == "hold":
+            if gesture_start_position is (-1.0, -1.0, -1.0):
+                gesture_start_position = gesture_position
+        elif gesture == "palm":
+            if gesture_start_position is (-1.0, -1.0, -1.0):
+                gesture_start_position = gesture_position
+        elif gesture == "ok":
             if gesture_start_position is (-1.0, -1.0, -1.0):
                 gesture_start_position = gesture_position
         else:
