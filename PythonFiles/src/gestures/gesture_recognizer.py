@@ -7,7 +7,7 @@ import os
 
 
 GESTURE_MODEL_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'models', 'gesture_recognizer_new.task'
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'models', 'nodrag_gesture.task'
 )  
 
 gesture_options = vision.GestureRecognizerOptions(
