@@ -8,6 +8,8 @@ from utilities import calculate_camera_fov
 from socket import *
 import struct
 from video_segment_recorder import VideoSegmentRecorder
+import sys
+import traceback
 
 def render_video(cv, frame, face_center, gesture=None, fov=None, segment_info=None):
     if face_center is not None:
@@ -29,7 +31,7 @@ def render_video(cv, frame, face_center, gesture=None, fov=None, segment_info=No
         cv.putText(frame, "Press 's' to save segment | 'r' to reset | 'q' to quit", 
                    (10, frame.shape[0] - 10), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
         
-    cv.imshow('frame', frame)
+    #cv.imshow('frame', frame)
     return frame
 
 def AspectRatioCalculator(width, height):
@@ -51,6 +53,33 @@ def gesture_to_code(gesture):
         return -1.0
     
 def main():
+
+     # Add this at the VERY TOP of main()
+    error_log_path = os.path.join(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else ".", "error_log.txt")
+    
+    try:
+        # Redirect stderr to a file so we can see errors
+        sys.stderr = open(error_log_path, 'w')
+        
+        print(f"Starting application...")
+        print(f"Python version: {sys.version}")
+        print(f"Executable path: {sys.executable}")
+        print(f"Working directory: {os.getcwd()}")
+        
+        # Your existing code...
+        cap = cv.VideoCapture(0)
+        print(f"Camera opened: {cap.isOpened()}")
+        # ... rest of your code
+        
+    except Exception as e:
+        # Log the full error
+        with open(error_log_path, 'a') as f:
+            f.write(f"\nFATAL ERROR: {str(e)}\n")
+            f.write(traceback.format_exc())
+        print(f"Error logged to {error_log_path}")
+        raise
+
+
     cap = cv.VideoCapture(0)
 
     # Properties
@@ -79,7 +108,7 @@ def main():
 
     if not cap.isOpened():
         print("Cannot open camera")
-        exit()
+        #exit()
 
     gesture_start_position = (-1.0, -1.0, -1.0)
     fov = None
