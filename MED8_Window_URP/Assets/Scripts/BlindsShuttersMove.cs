@@ -133,7 +133,6 @@ public class BlindsShutterMove : MonoBehaviour
         // Apply updates
         UpdateMovement();
         UpdateTilt();
-        print(targetOpen);
     }
 
     //----------------------- Movement & Stacking -------------------------//

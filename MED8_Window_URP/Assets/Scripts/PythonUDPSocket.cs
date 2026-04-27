@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Serialization;
+using System.Diagnostics;
+using System.IO;
 
 public class UnityPythonConnector : MonoBehaviour
 {
@@ -92,7 +94,7 @@ public class UnityPythonConnector : MonoBehaviour
             }
             catch (Exception e)
             {
-                Debug.LogError("UDP receive error: " + e.Message);
+                print("UDP receive error: " + e.Message);
             }
         }
     }
@@ -106,10 +108,10 @@ public class UnityPythonConnector : MonoBehaviour
         switch (codeInt)
         {
             case 0:
-                Debug.Log("No Gesture");
+                print("No Gesture");
                 break;
             case 1:
-                Debug.Log("Drag gesture detected");
+                print("Drag gesture detected");
                 break;
         }
     }
