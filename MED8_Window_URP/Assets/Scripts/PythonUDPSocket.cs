@@ -29,6 +29,20 @@ public class UnityPythonConnector : MonoBehaviour
     [SerializeField] private float recenterTimeLimit;
     [SerializeField] private float timer;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
+    
+    public static UnityPythonConnector Instance { get; private set; }
+    void Awake()
+    {
+        // Singleton check
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
     void Start()
     {  
         InitializeUDP();

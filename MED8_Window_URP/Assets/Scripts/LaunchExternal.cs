@@ -4,18 +4,32 @@ using System.IO;
 
 public class LaunchExternal : MonoBehaviour
 {
+    public static LaunchExternal Instance { get; private set; }
+
     private Process pythonProcess;
+
+    void Awake()
+    {
+        // Singleton check
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
 
     void Start()
     {
-        DontDestroyOnLoad(gameObject);
         string exePath = Path.Combine(Application.streamingAssetsPath, "face_gesture_server.exe");
 
         ProcessStartInfo startInfo = new ProcessStartInfo
         {
             FileName = exePath,
-            UseShellExecute = true,     // IMPORTANT
-            CreateNoWindow = false       // keep CMD visible
+            UseShellExecute = true,
+            CreateNoWindow = false
         };
 
         pythonProcess = Process.Start(startInfo);

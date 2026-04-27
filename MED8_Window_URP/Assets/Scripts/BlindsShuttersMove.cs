@@ -43,13 +43,12 @@ public class BlindsShutterMove : MonoBehaviour
 
     // ---------- External Input ----------
     [Header("External Input")]
-    [SerializeField] private UnityPythonConnector _pythonConnector;
     bool gestureActive = false;
     float gestureStartOpen;   // blinds position when gesture begins
 
     // ----------------------- Initialization -------------------------//
     void Start()
-    {
+    {       
         int count = slats.Length;
 
         startY = new float[count];
@@ -76,11 +75,11 @@ public class BlindsShutterMove : MonoBehaviour
     {
         // Lifting
         bool validGesture =
-            _pythonConnector.GesturePositionY > -0.5f &&
-            _pythonConnector.GestureStartPositionY > -0.5f &&
-            _pythonConnector.GesturePositionX > -0.5f &&
-            _pythonConnector.GestureStartPositionX > -0.5f &&
-            _pythonConnector.gesture > 0.0f;
+            UnityPythonConnector.Instance.GesturePositionY > -0.5f &&
+            UnityPythonConnector.Instance.GestureStartPositionY > -0.5f &&
+            UnityPythonConnector.Instance.GesturePositionX > -0.5f &&
+            UnityPythonConnector.Instance.GestureStartPositionX > -0.5f &&
+            UnityPythonConnector.Instance.gesture > 0.0f;
 
         // Gesture just started
         if (validGesture && !gestureActive)
@@ -98,7 +97,7 @@ public class BlindsShutterMove : MonoBehaviour
         // Apply relative movement when gesture is active
         if (gestureActive)
         {
-            switch (_pythonConnector.gesture)
+            switch (UnityPythonConnector.Instance.gesture)
             {
                 case 1.0f: // Tilt close
                     TiltBlinds(-0.01f);
@@ -204,8 +203,8 @@ public class BlindsShutterMove : MonoBehaviour
     void MoveBlinds()
     {
         float deltaY =
-                _pythonConnector.GestureStartPositionY -
-                _pythonConnector.GesturePositionY;
+                UnityPythonConnector.Instance.GestureStartPositionY -
+                UnityPythonConnector.Instance.GesturePositionY;
 
             targetOpen = Mathf.Clamp01(gestureStartOpen + deltaY);
     }
@@ -216,8 +215,8 @@ public class BlindsShutterMove : MonoBehaviour
     void SceneSwitch()
     {
         float deltaX =
-                _pythonConnector.GesturePositionX -
-                _pythonConnector.GestureStartPositionX;
+                UnityPythonConnector.Instance.GesturePositionX -
+                UnityPythonConnector.Instance.GestureStartPositionX;
             if (deltaX >= 0.3f)
             {
                 SceneTransitionManager.Instance.GoToNextScene();
