@@ -215,7 +215,7 @@ def main():
         if key == ord('s'):
             # Save current segment
             if currently_recording == True:
-                print(f"\nSaving segment with {segment_info['frame_count']} frames...")
+                #print(f"\nSaving segment with {segment_info['frame_count']} frames...")
                 video_recorder.save_current_segment()
                 currently_recording = False
             else:
@@ -224,7 +224,7 @@ def main():
         elif key == ord('r'):
             # Reset current segment without saving
             if len(video_recorder.current_segment_frames) > 0:
-                print(f"\nResetting segment (discarding {segment_info['frame_count']} frames)")
+                #print(f"\nResetting segment (discarding {segment_info['frame_count']} frames)")
                 video_recorder.reset_segment()
             else:
                 print("\nNothing to reset")
