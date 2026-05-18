@@ -11,15 +11,15 @@ from video_segment_recorder import VideoSegmentRecorder
 import sys
 import traceback
 
-def render_video(cv, frame, face_center, gesture=None, fov=None, segment_info=None):
+def render_video(cv, frame, face_center, fov=None, segment_info=None):
     if face_center is not None:
         h, w = frame.shape[:2]
         cx = int(face_center[0] * w)
         cy = int(face_center[1] * h)
         cv.circle(frame, (cx, cy), 8, color=(0, 255, 0), thickness=-1)
-    if gesture is not None:
-        cv.putText(frame, f"Gesture: {gesture}", (10, 40),
-                   cv.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
+    #if gesture is not None:
+        #cv.putText(frame, f"Gesture: {gesture}", (10, 40),
+                   #cv.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
     if fov is not None:
         cv.putText(frame, f"FOV: {fov:.1f} deg", (10, 80),
                    cv.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
@@ -101,10 +101,13 @@ def main():
     #out = cv.VideoWriter('output.avi', fourcc, fps, (frame_width, frame_height))
 
     clientSocket = socket(AF_INET, SOCK_DGRAM)
-    address = ("127.0.0.1", 8888)
+    pythonSocket = socket(AF_INET, SOCK_DGRAM)
+    addressOut = ("127.0.0.1", 8888)
+    addressIn = ("127.0.0.1", 4242)
+    pythonSocket.bind(addressIn)
 
     landmarker = FaceLandmarker()
-    gesture_recognizer = GestureRecognizer()
+    #gesture_recognizer = GestureRecognizer()
 
     if not cap.isOpened():
         print("Cannot open camera")
@@ -113,69 +116,100 @@ def main():
     gesture_start_position = (-1.0, -1.0, -1.0)
     fov = None
     aspect_ratio = None
+    OpenTrackOpen = False
 
     while True:
-        ret, frame = cap.read()
+        key = cv.waitKey(1) & 0xFF
 
-        if not ret:
-            print("Can't receive frame (stream end?). Exiting ...")
-            break
+        if key == ord('t'):
+            OpenTrackOpen = not OpenTrackOpen
+        
+        if OpenTrackOpen == False:
+            ret, frame = cap.read()
 
-        if fov is None:
-            h, w = frame.shape[:2]
-            fov = calculate_camera_fov(w)
-            aspect_ratio = w / h
+            if not ret:
+                print("Can't receive frame (stream end?). Exiting ...")
+                break
 
-        face_center, distance = landmarker.detect_faces(frame)
-        gesture = gesture_recognizer.recognize_gesture(frame)
-        gesture_position = gesture_recognizer.get_gesture_position(frame)
+            if fov is None:
+                h, w = frame.shape[:2]
+                fov = calculate_camera_fov(w)
+                aspect_ratio = w / h
 
-        if gesture == "fist_left":
-            if gesture_start_position is (-1.0, -1.0, -1.0):
-                gesture_start_position = gesture_position
-        elif gesture == "fist_middle":
-            if gesture_start_position is (-1.0, -1.0, -1.0):
-                gesture_start_position = gesture_position
-        elif gesture == "fist_right":
-            if gesture_start_position is (-1.0, -1.0, -1.0):
-                gesture_start_position = gesture_position
-        elif gesture == "palm":
-            if gesture_start_position is (-1.0, -1.0, -1.0):
-                gesture_start_position = gesture_position
+            face_center, distance = landmarker.detect_faces(frame)
+
+            if face_center is not None:
+                face_x, face_y = face_center
+                #gesture_code = gesture_to_code(gesture)
+                #print (f"Gesture start position: {round(gesture_start_position[0], 2), round(gesture_start_position[1], 2)}, Gesture position: {round(gesture_position[0], 2), round(gesture_position[1], 2)}")
+                message = struct.pack('ffff', 
+                                    face_x, 
+                                    face_y, 
+                                    aspect_ratio, 
+                                    distance, 
+                                    #gesture_code, 
+                                    #gesture_start_position[0], 
+                                    #gesture_position[0], 
+                                    #gesture_start_position[1], 
+                                    #gesture_position[1]
+                                  )
+                clientSocket.sendto(message, addressOut)
+
         else:
-            gesture_start_position = (-1.0, -1.0, -1.0)
+            data, addr = pythonSocket.recvfrom(48)
+
+            openTrackPosition = struct.unpack('dddddd', data)
+                
+            if face_center is not None:
+                face_x, face_y = face_center
+                #gesture_code = gesture_to_code(gesture)
+                #print (f"Gesture start position: {round(gesture_start_position[0], 2), round(gesture_start_position[1], 2)}, Gesture position: {round(gesture_position[0], 2), round(gesture_position[1], 2)}")
+                message = struct.pack('ffff', 
+                                    openTrackPosition.x, 
+                                    openTrackPosition.y, 
+                                    aspect_ratio, 
+                                    openTrackPosition.z, 
+                                    #gesture_code, 
+                                    #gesture_start_position[0], 
+                                    #gesture_position[0], 
+                                    #gesture_start_position[1], 
+                                    #gesture_position[1]
+                                  )
+                clientSocket.sendto(message, addressOut)
+
+
+        #gesture = gesture_recognizer.recognize_gesture(frame)
+        #gesture_position = gesture_recognizer.get_gesture_position(frame)
+
+        #if gesture == "fist_left":
+        #    if gesture_start_position is (-1.0, -1.0, -1.0):
+        #        gesture_start_position = gesture_position
+        #elif gesture == "fist_middle":
+        #    if gesture_start_position is (-1.0, -1.0, -1.0):
+        #        gesture_start_position = gesture_position
+        #elif gesture == "fist_right":
+        #    if gesture_start_position is (-1.0, -1.0, -1.0):
+        #        gesture_start_position = gesture_position
+        #elif gesture == "palm":
+        #    if gesture_start_position is (-1.0, -1.0, -1.0):
+        #        gesture_start_position = gesture_position
+        #else:
+        #    gesture_start_position = (-1.0, -1.0, -1.0)
         
 
-        if face_center is not None:
-            face_x, face_y = face_center
-            gesture_code = gesture_to_code(gesture)
-            print (f"Gesture start position: {round(gesture_start_position[0], 2), round(gesture_start_position[1], 2)}, Gesture position: {round(gesture_position[0], 2), round(gesture_position[1], 2)}")
-            message = struct.pack('fffffffff', 
-                                  face_x, 
-                                  face_y, 
-                                  aspect_ratio, 
-                                  distance, 
-                                  gesture_code, 
-                                  gesture_start_position[0], 
-                                  gesture_position[0], 
-                                  gesture_start_position[1], 
-                                  gesture_position[1])
-            clientSocket.sendto(message, address)
-
-        # Add frame to the segment recorder
-        if currently_recording == True:
-            video_recorder.add_frame(frame)
+        # Add frame to the segment recorder (comment out to enable)
+        #if currently_recording == True:
+            #video_recorder.add_frame(frame)
 
             # Get segment info for display
-            segment_info = video_recorder.get_segment_info()
+            #segment_info = video_recorder.get_segment_info()
 
-        if currently_recording == True:
+        #if currently_recording == True:
             # Render video with segment info
-            render_video(cv, frame, face_center, gesture, fov, segment_info)
-        else:
-            render_video(cv, frame, face_center, gesture, fov)
+            #render_video(cv, frame, face_center, fov, segment_info)
+        #else:
+            #render_video(cv, frame, face_center, fov)
 
-        key = cv.waitKey(1) & 0xFF
 
         #out.write(frame)
         if key == ord('s'):
