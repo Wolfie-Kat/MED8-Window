@@ -8,16 +8,18 @@ from utilities import calculate_camera_fov
 from socket import *
 import struct
 from video_segment_recorder import VideoSegmentRecorder
+import sys
+import traceback
 
-def render_video(cv, frame, face_center, gesture=None, fov=None, segment_info=None):
+def render_video(cv, frame, face_center, fov=None, segment_info=None):
     if face_center is not None:
         h, w = frame.shape[:2]
         cx = int(face_center[0] * w)
         cy = int(face_center[1] * h)
         cv.circle(frame, (cx, cy), 8, color=(0, 255, 0), thickness=-1)
-    if gesture is not None:
-        cv.putText(frame, f"Gesture: {gesture}", (10, 40),
-                   cv.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
+    #if gesture is not None:
+        #cv.putText(frame, f"Gesture: {gesture}", (10, 40),
+                   #cv.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
     if fov is not None:
         cv.putText(frame, f"FOV: {fov:.1f} deg", (10, 80),
                    cv.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
@@ -29,7 +31,7 @@ def render_video(cv, frame, face_center, gesture=None, fov=None, segment_info=No
         cv.putText(frame, "Press 's' to save segment | 'r' to reset | 'q' to quit", 
                    (10, frame.shape[0] - 10), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
         
-    cv.imshow('frame', frame)
+    #cv.imshow('frame', frame)
     return frame
 
 def AspectRatioCalculator(width, height):
@@ -37,14 +39,47 @@ def AspectRatioCalculator(width, height):
         return ratio
 
 def gesture_to_code(gesture):
-    if gesture == "none":
+    if gesture == "none" or gesture == "hold":
         return 0.0
-    elif gesture == "drag":
+    elif gesture == "fist_left":
         return 1.0
+    elif gesture == "fist_middle":
+        return 2.0
+    elif gesture == "fist_right":
+        return 3.0
+    elif gesture == "palm":
+        return 4.0
     else:
         return -1.0
     
 def main():
+
+     # Add this at the VERY TOP of main()
+    error_log_path = os.path.join(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else ".", "error_log.txt")
+    
+    try:
+        # Redirect stderr to a file so we can see errors
+        sys.stderr = open(error_log_path, 'w')
+        
+        print(f"Starting application...")
+        print(f"Python version: {sys.version}")
+        print(f"Executable path: {sys.executable}")
+        print(f"Working directory: {os.getcwd()}")
+        
+        # Your existing code...
+        cap = cv.VideoCapture(0)
+        print(f"Camera opened: {cap.isOpened()}")
+        # ... rest of your code
+        
+    except Exception as e:
+        # Log the full error
+        with open(error_log_path, 'a') as f:
+            f.write(f"\nFATAL ERROR: {str(e)}\n")
+            f.write(traceback.format_exc())
+        print(f"Error logged to {error_log_path}")
+        raise
+
+
     cap = cv.VideoCapture(0)
 
     # Properties
@@ -66,81 +101,121 @@ def main():
     #out = cv.VideoWriter('output.avi', fourcc, fps, (frame_width, frame_height))
 
     clientSocket = socket(AF_INET, SOCK_DGRAM)
-    address = ("127.0.0.1", 8888)
+    pythonSocket = socket(AF_INET, SOCK_DGRAM)
+    addressOut = ("127.0.0.1", 8888)
+    addressIn = ("127.0.0.1", 4242)
+    pythonSocket.bind(addressIn)
 
     landmarker = FaceLandmarker()
-    gesture_recognizer = GestureRecognizer()
+    #gesture_recognizer = GestureRecognizer()
 
     if not cap.isOpened():
         print("Cannot open camera")
-        exit()
+        #exit()
 
     gesture_start_position = (-1.0, -1.0, -1.0)
     fov = None
     aspect_ratio = None
+    OpenTrackOpen = False
 
     while True:
-        ret, frame = cap.read()
+        key = cv.waitKey(1) & 0xFF
 
-        if not ret:
-            print("Can't receive frame (stream end?). Exiting ...")
-            break
+        if key == ord('t'):
+            OpenTrackOpen = not OpenTrackOpen
+        
+        if OpenTrackOpen == False:
+            ret, frame = cap.read()
 
-        if fov is None:
-            h, w = frame.shape[:2]
-            fov = calculate_camera_fov(w)
-            aspect_ratio = w / h
+            if not ret:
+                print("Can't receive frame (stream end?). Exiting ...")
+                break
 
-        face_center, distance = landmarker.detect_faces(frame)
-        gesture = gesture_recognizer.recognize_gesture(frame)
-        gesture_position = gesture_recognizer.get_gesture_position(frame)
+            if fov is None:
+                h, w = frame.shape[:2]
+                fov = calculate_camera_fov(w)
+                aspect_ratio = w / h
 
-        if gesture == "drag":
-            if gesture_start_position is (-1.0, -1.0, -1.0):
-                gesture_start_position = gesture_position
-        elif gesture == "none":
-            if gesture_start_position is (-1.0, -1.0, -1.0):
-                gesture_start_position = gesture_position
+            face_center, distance = landmarker.detect_faces(frame)
+
+            if face_center is not None:
+                face_x, face_y = face_center
+                #gesture_code = gesture_to_code(gesture)
+                #print (f"Gesture start position: {round(gesture_start_position[0], 2), round(gesture_start_position[1], 2)}, Gesture position: {round(gesture_position[0], 2), round(gesture_position[1], 2)}")
+                message = struct.pack('ffff', 
+                                    face_x, 
+                                    face_y, 
+                                    aspect_ratio, 
+                                    distance, 
+                                    #gesture_code, 
+                                    #gesture_start_position[0], 
+                                    #gesture_position[0], 
+                                    #gesture_start_position[1], 
+                                    #gesture_position[1]
+                                  )
+                clientSocket.sendto(message, addressOut)
+
         else:
-            gesture_start_position = (-1.0, -1.0, -1.0)
+            data, addr = pythonSocket.recvfrom(48)
+
+            openTrackPosition = struct.unpack('dddddd', data)
+                
+            if face_center is not None:
+                face_x, face_y = face_center
+                #gesture_code = gesture_to_code(gesture)
+                #print (f"Gesture start position: {round(gesture_start_position[0], 2), round(gesture_start_position[1], 2)}, Gesture position: {round(gesture_position[0], 2), round(gesture_position[1], 2)}")
+                message = struct.pack('ffff', 
+                                    openTrackPosition.x, 
+                                    openTrackPosition.y, 
+                                    aspect_ratio, 
+                                    openTrackPosition.z, 
+                                    #gesture_code, 
+                                    #gesture_start_position[0], 
+                                    #gesture_position[0], 
+                                    #gesture_start_position[1], 
+                                    #gesture_position[1]
+                                  )
+                clientSocket.sendto(message, addressOut)
+
+
+        #gesture = gesture_recognizer.recognize_gesture(frame)
+        #gesture_position = gesture_recognizer.get_gesture_position(frame)
+
+        #if gesture == "fist_left":
+        #    if gesture_start_position is (-1.0, -1.0, -1.0):
+        #        gesture_start_position = gesture_position
+        #elif gesture == "fist_middle":
+        #    if gesture_start_position is (-1.0, -1.0, -1.0):
+        #        gesture_start_position = gesture_position
+        #elif gesture == "fist_right":
+        #    if gesture_start_position is (-1.0, -1.0, -1.0):
+        #        gesture_start_position = gesture_position
+        #elif gesture == "palm":
+        #    if gesture_start_position is (-1.0, -1.0, -1.0):
+        #        gesture_start_position = gesture_position
+        #else:
+        #    gesture_start_position = (-1.0, -1.0, -1.0)
         
 
-        if face_center is not None:
-            face_x, face_y = face_center
-            gesture_code = gesture_to_code(gesture)
-            print (f"Gesture start position: {round(gesture_start_position[0], 2), round(gesture_start_position[1], 2)}, Gesture position: {round(gesture_position[0], 2), round(gesture_position[1], 2)}")
-            message = struct.pack('fffffffff', 
-                                  face_x, 
-                                  face_y, 
-                                  aspect_ratio, 
-                                  distance, 
-                                  gesture_code, 
-                                  gesture_start_position[0], 
-                                  gesture_position[0], 
-                                  gesture_start_position[1], 
-                                  gesture_position[1])
-            clientSocket.sendto(message, address)
-
-        # Add frame to the segment recorder
-        if currently_recording == True:
-            video_recorder.add_frame(frame)
+        # Add frame to the segment recorder (comment out to enable)
+        #if currently_recording == True:
+            #video_recorder.add_frame(frame)
 
             # Get segment info for display
-            segment_info = video_recorder.get_segment_info()
+            #segment_info = video_recorder.get_segment_info()
 
-        if currently_recording == True:
+        #if currently_recording == True:
             # Render video with segment info
-            render_video(cv, frame, face_center, gesture, fov, segment_info)
-        else:
-            render_video(cv, frame, face_center, gesture, fov)
+            #render_video(cv, frame, face_center, fov, segment_info)
+        #else:
+            #render_video(cv, frame, face_center, fov)
 
-        key = cv.waitKey(1) & 0xFF
 
         #out.write(frame)
         if key == ord('s'):
             # Save current segment
             if currently_recording == True:
-                print(f"\nSaving segment with {segment_info['frame_count']} frames...")
+                #print(f"\nSaving segment with {segment_info['frame_count']} frames...")
                 video_recorder.save_current_segment()
                 currently_recording = False
             else:
@@ -149,7 +224,7 @@ def main():
         elif key == ord('r'):
             # Reset current segment without saving
             if len(video_recorder.current_segment_frames) > 0:
-                print(f"\nResetting segment (discarding {segment_info['frame_count']} frames)")
+                #print(f"\nResetting segment (discarding {segment_info['frame_count']} frames)")
                 video_recorder.reset_segment()
             else:
                 print("\nNothing to reset")

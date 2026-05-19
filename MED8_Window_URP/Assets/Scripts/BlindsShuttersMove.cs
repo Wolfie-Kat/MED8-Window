@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.Linq.Expressions;
 using UnityEngine;
 
 /// <summary>Controls lifting and tilting behaviour of window blind slats.</summary>
@@ -34,20 +36,19 @@ public class BlindsShutterMove : MonoBehaviour
     [Range(0f,1f)]
     public float tiltAmount = 0.5f;
     // Tilt angle limits
-    public float minTiltX = -175f;
+    public float minTiltX = -90f;
     public float maxTiltX = -5f;
     // Smoothed tilt target
     float targetTilt;
 
     // ---------- External Input ----------
     [Header("External Input")]
-    [SerializeField] private UnityPythonConnector _pythonConnector;
     bool gestureActive = false;
     float gestureStartOpen;   // blinds position when gesture begins
 
     // ----------------------- Initialization -------------------------//
     void Start()
-    {
+    {       
         int count = slats.Length;
 
         startY = new float[count];
@@ -74,11 +75,11 @@ public class BlindsShutterMove : MonoBehaviour
     {
         // Lifting
         bool validGesture =
-            _pythonConnector.GesturePositionY > -0.5f &&
-            _pythonConnector.GestureStartPositionY > -0.5f &&
-            _pythonConnector.GesturePositionX > -0.5f &&
-            _pythonConnector.GestureStartPositionX > -0.5f &&
-            _pythonConnector.gesture >= 0.0f;
+            UnityPythonConnector.Instance.GesturePositionY > -0.5f &&
+            UnityPythonConnector.Instance.GestureStartPositionY > -0.5f &&
+            UnityPythonConnector.Instance.GesturePositionX > -0.5f &&
+            UnityPythonConnector.Instance.GestureStartPositionX > -0.5f &&
+            UnityPythonConnector.Instance.gesture > 0.0f;
 
         // Gesture just started
         if (validGesture && !gestureActive)
@@ -96,22 +97,22 @@ public class BlindsShutterMove : MonoBehaviour
         // Apply relative movement when gesture is active
         if (gestureActive)
         {
-            float deltaY =
-                _pythonConnector.GestureStartPositionY -
-                _pythonConnector.GesturePositionY;
-
-            targetOpen = Mathf.Clamp01(gestureStartOpen + deltaY);
-            
-            float deltaX =
-                _pythonConnector.GesturePositionX -
-                _pythonConnector.GestureStartPositionX;
-            if (deltaX >= 0.3f)
+            switch (UnityPythonConnector.Instance.gesture)
             {
-                SceneTransitionManager.Instance.GoToNextScene();
-            }
-            if (deltaX <= -0.3f)
-            {
-                SceneTransitionManager.Instance.GoToPreviousScene();
+                case 1.0f: // Tilt close
+                    TiltBlinds(-0.01f);
+                    break;
+                case 2.0f: // Lift gesture
+                    MoveBlinds();
+                    break;
+                case 3.0f: // Tilt open
+                    TiltBlinds(0.01f);
+                    break;
+                case 4.0f: // Scene switch gesture
+                    SceneSwitch();
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -125,13 +126,12 @@ public class BlindsShutterMove : MonoBehaviour
         tiltAmount = Mathf.MoveTowards(
             tiltAmount,
             targetTilt,
-            tiltSpeed * Time.deltaTime
+            Time.deltaTime
         );
 
         // Apply updates
         UpdateMovement();
         UpdateTilt();
-        print(targetOpen);
     }
 
     //----------------------- Movement & Stacking -------------------------//
@@ -198,6 +198,33 @@ public class BlindsShutterMove : MonoBehaviour
         {
             slats[i].localRotation = targetRotation;
         }
+    }
+
+    void MoveBlinds()
+    {
+        float deltaY =
+                UnityPythonConnector.Instance.GestureStartPositionY -
+                UnityPythonConnector.Instance.GesturePositionY;
+
+            targetOpen = Mathf.Clamp01(gestureStartOpen + deltaY);
+    }
+    void TiltBlinds(float input)
+    {
+        targetTilt = Mathf.Clamp01(targetTilt + input);
+    }
+    void SceneSwitch()
+    {
+        float deltaX =
+                UnityPythonConnector.Instance.GesturePositionX -
+                UnityPythonConnector.Instance.GestureStartPositionX;
+            if (deltaX >= 0.3f)
+            {
+                SceneTransitionManager.Instance.GoToNextScene();
+            }
+            if (deltaX <= -0.3f)
+            {
+                SceneTransitionManager.Instance.GoToPreviousScene();
+            }
     }
 }
 

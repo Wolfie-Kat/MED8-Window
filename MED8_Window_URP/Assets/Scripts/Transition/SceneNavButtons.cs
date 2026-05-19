@@ -4,20 +4,34 @@ using UnityEngine.SceneManagement;
 
 public class SceneNavButtons : MonoBehaviour
 {
+    public static SceneNavButtons Instance { get; private set; }
     [SerializeField] private Button leftButton;
     [SerializeField] private Button rightButton;
 
     void Awake()
     {
+        // Singleton check
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
         leftButton.onClick.AddListener(OnLeftClicked);
         rightButton.onClick.AddListener(OnRightClicked);
     }
     void Start()
     {   
-        // DontDestroyOnLoad(gameObject);
-        // UpdateButtonVisibility();
-        leftButton.gameObject.SetActive(false);
-        rightButton.gameObject.SetActive(false);
+        UpdateButtonVisibility();
+        // leftButton.gameObject.SetActive(false);
+        // rightButton.gameObject.SetActive(false);
+    }
+    void Update()
+    {
+        UpdateButtonVisibility();
     }
 
     private void OnLeftClicked()

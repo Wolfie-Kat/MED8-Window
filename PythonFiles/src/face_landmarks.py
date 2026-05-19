@@ -5,13 +5,51 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from utilities import Utilities, load_calibration_data
 import os
+import sys
 
-path= os.path.join(os.path.dirname(os.path.dirname(__file__)),'models', 'face_landmarker.task')
-base_options = python.BaseOptions(model_asset_path=path)
+# Fix path handling for both development and frozen exe
+def get_base_path():
+    """Get the correct base path whether running as script or frozen exe"""
+    if getattr(sys, 'frozen', False):
+        # Running as PyInstaller bundle
+        return sys._MEIPASS
+    else:
+        # Running as normal Python script
+        return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-GESTURE_MODEL_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)), 'models', 'gesture_recognizer.task'
-)
+BASE_PATH = get_base_path()
+
+# Model paths - check models folder first, then root
+MODELS_FOLDER = os.path.join(BASE_PATH, 'models')
+FACE_MODEL_PATH = os.path.join(MODELS_FOLDER, 'face_landmarker.task')
+GESTURE_MODEL_PATH = os.path.join(MODELS_FOLDER, 'gesture_recognizer.task')
+
+# If models folder doesn't exist, check root (for when files are added directly)
+if not os.path.exists(FACE_MODEL_PATH):
+    FACE_MODEL_PATH = os.path.join(BASE_PATH, 'face_landmarker.task')
+if not os.path.exists(GESTURE_MODEL_PATH):
+    GESTURE_MODEL_PATH = os.path.join(BASE_PATH, 'gesture_recognizer.task')
+
+# Verify models exist
+if not os.path.exists(FACE_MODEL_PATH):
+    # List available .task files for debugging
+    available_tasks = []
+    for root, dirs, files in os.walk(BASE_PATH):
+        for file in files:
+            if file.endswith('.task'):
+                available_tasks.append(os.path.join(root, file))
+    
+    error_msg = f"Face landmarker model not found!\n"
+    error_msg += f"Searched: {FACE_MODEL_PATH}\n"
+    error_msg += f"Available .task files: {available_tasks}"
+    raise FileNotFoundError(error_msg)
+
+print(f"Loading face model from: {FACE_MODEL_PATH}")
+print(f"Loading gesture model from: {GESTURE_MODEL_PATH}")
+
+base_options = python.BaseOptions(model_asset_path=FACE_MODEL_PATH)
+gesture_base_options = python.BaseOptions(model_asset_path=GESTURE_MODEL_PATH)
+
 REAL_FACE_WIDTH_CM = 14.2
 
 options = vision.FaceLandmarkerOptions(
@@ -25,7 +63,7 @@ options = vision.FaceLandmarkerOptions(
 )
 
 gesture_options = vision.GestureRecognizerOptions(
-    base_options=python.BaseOptions(model_asset_path=GESTURE_MODEL_PATH),
+    base_options=gesture_base_options,
     running_mode=mp.tasks.vision.RunningMode.VIDEO
 )
 
@@ -83,4 +121,3 @@ class FaceLandmarker:
             return face_center, distance
 
         return None, None
-    

@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Serialization;
+using System.Diagnostics;
+using System.IO;
 
 public class UnityPythonConnector : MonoBehaviour
 {
@@ -27,6 +29,20 @@ public class UnityPythonConnector : MonoBehaviour
     [SerializeField] private float recenterTimeLimit;
     [SerializeField] private float timer;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
+    
+    public static UnityPythonConnector Instance { get; private set; }
+    void Awake()
+    {
+        // Singleton check
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
     void Start()
     {  
         InitializeUDP();
@@ -75,24 +91,24 @@ public class UnityPythonConnector : MonoBehaviour
             try
             {
                 byte[] data = _udpClient.Receive(ref anyIP);
-                if (data.Length >= 36)
+                if (data.Length >= 16)
                 {
                     _latestX = BitConverter.ToSingle(data, 0);
                     _latestY = BitConverter.ToSingle(data, 4);
                     _FOV = BitConverter.ToSingle(data, 8);
                     distance = BitConverter.ToSingle(data, 12);
-                    gesture = BitConverter.ToSingle(data, 16);
+                    /*gesture = BitConverter.ToSingle(data, 16);
                     GestureStartPositionX = BitConverter.ToSingle(data, 20);
                     GesturePositionX = BitConverter.ToSingle(data, 24);
                     GestureStartPositionY = BitConverter.ToSingle(data, 28);
                     GesturePositionY = BitConverter.ToSingle(data, 32);
-                    HandleGesture(gesture);
+                    HandleGesture(gesture);*/
                     hasNewData = true;
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError("UDP receive error: " + e.Message);
+                print("UDP receive error: " + e.Message);
             }
         }
     }
@@ -106,10 +122,10 @@ public class UnityPythonConnector : MonoBehaviour
         switch (codeInt)
         {
             case 0:
-                Debug.Log("No Gesture");
+                print("No Gesture");
                 break;
             case 1:
-                Debug.Log("Drag gesture detected");
+                print("Drag gesture detected");
                 break;
         }
     }

@@ -4,11 +4,53 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import os
+import sys
 
+# Fix path handling for both development and frozen exe
+def get_base_path():
+    """Get the correct base path whether running as script or frozen exe"""
+    if getattr(sys, 'frozen', False):
+        # Running as PyInstaller bundle
+        return sys._MEIPASS
+    else:
+        # Running as normal Python script
+        # Go up 3 levels from gestures/gesture_recognizer.py to project root
+        return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-GESTURE_MODEL_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'models', 'gesture_recognizer_custom.task'
-)  
+BASE_PATH = get_base_path()
+
+# Find the gesture model
+def find_model():
+    possible_paths = [
+        os.path.join(BASE_PATH, 'models', 'nodrag_gesture.task'),
+        os.path.join(BASE_PATH, 'nodrag_gesture.task'),
+    ]
+    
+    # Also search recursively
+    for root, dirs, files in os.walk(BASE_PATH):
+        for file in files:
+            if file == 'nodrag_gesture.task':
+                possible_paths.insert(0, os.path.join(root, file))
+    
+    for path in possible_paths:
+        if os.path.exists(path):
+            return path
+    
+    # Debug info
+    task_files = []
+    for root, dirs, files in os.walk(BASE_PATH):
+        for file in files:
+            if file.endswith('.task'):
+                task_files.append(os.path.join(root, file))
+    
+    raise FileNotFoundError(
+        f"nodrag_gesture.task not found!\n"
+        f"Base path: {BASE_PATH}\n"
+        f"Available .task files: {task_files}"
+    )
+
+GESTURE_MODEL_PATH = find_model()
+print(f"Loading gesture model from: {GESTURE_MODEL_PATH}")
 
 gesture_options = vision.GestureRecognizerOptions(
     base_options=python.BaseOptions(model_asset_path=GESTURE_MODEL_PATH),
@@ -91,4 +133,3 @@ class GestureRecognizer:
         y_offset = current_y - start_y
         normalized = (y_offset / max_distance + 1) / 2
         return max(0.0, min(1.0, normalized))
-    
