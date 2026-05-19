@@ -45,7 +45,14 @@ public class OffAxisCamera : MonoBehaviour
         eyeDistance = -Vector3.Dot(eyeToCorner, projectionPlane.DirNormal);
 
         if (eyeDistance < 0.001f)
-            return; // eye is on or behind the projection plane
+        {
+            Debug.LogWarning($"[OffAxisCamera] Eye behind plane. eyeDistance={eyeDistance}");
+            return;
+        }
+
+        Debug.Log($"[OffAxisCamera] BL={projectionPlane.BottomLeft} BR={projectionPlane.BottomRight} TL={projectionPlane.TopLeft} " +
+                  $"DirR={projectionPlane.DirRight} DirU={projectionPlane.DirUp} DirN={projectionPlane.DirNormal} " +
+                  $"eyePos={eyeTransform.position} eyeDist={eyeDistance:F4}");
 
         // Step 2: frustum extents.
         // For each edge we need, take the vector from eye to the relevant

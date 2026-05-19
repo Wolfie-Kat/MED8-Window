@@ -154,14 +154,38 @@ public class ProjectionPlane : MonoBehaviour
 
     private void OnDrawGizmos()
     {
+        Vector3 center = (BottomLeft + TopRight) * 0.5f;
+        float hw = SizeInMeters.x * 0.5f;
+        float hh = SizeInMeters.y * 0.5f;
+
+        // Screen rectangle
         Gizmos.color = Color.red;
         Gizmos.DrawLine(BottomLeft, BottomRight);
         Gizmos.DrawLine(BottomRight, TopRight);
         Gizmos.DrawLine(TopRight, TopLeft);
         Gizmos.DrawLine(TopLeft, BottomLeft);
 
+        // Diagonal cross so it's visible from far away
+        Gizmos.color = new Color(1f, 0f, 0f, 0.3f);
+        Gizmos.DrawLine(BottomLeft, TopRight);
+        Gizmos.DrawLine(BottomRight, TopLeft);
+
+        // Normal arrow (shows which side the eye should be on)
         Gizmos.color = Color.cyan;
-        Vector3 center = (BottomLeft + TopRight) * 0.5f;
-        Gizmos.DrawLine(center, center + DirNormal * 0.1f);
+        Gizmos.DrawLine(center, center + DirNormal * 0.3f);
+        // Arrowhead
+        Vector3 arrowTip = center + DirNormal * 0.3f;
+        Gizmos.DrawLine(arrowTip, arrowTip - DirNormal * 0.05f + DirRight * 0.03f);
+        Gizmos.DrawLine(arrowTip, arrowTip - DirNormal * 0.05f - DirRight * 0.03f);
+
+        // Axes labels: R=right, U=up
+        Gizmos.color = Color.green;
+        Gizmos.DrawLine(center, center + DirRight * hw);
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(center, center + DirUp * hh);
+
+        // "Eye side" label — small sphere on the normal side
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(center + DirNormal * 0.15f, 0.02f);
     }
 }
