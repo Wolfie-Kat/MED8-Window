@@ -1,189 +1,167 @@
-using System;
 using UnityEngine;
 
+/// <summary>
+/// Defines a screen rectangle in 3D space.
+/// All sizes are in meters (1 Unity unit = 1 meter).
+/// </summary>
 [ExecuteInEditMode]
 public class ProjectionPlane : MonoBehaviour
 {
-    [Header("Size")]
-    public Vector2 Size = new Vector2(8f, 4.5f);
-    public Vector2 AspectRatio = new Vector2(16, 9);
-    public bool LockAspectRatio = true;
-    [Header("Visualization")]
-    public bool DrawGizmos = true;
-    [Header("Alignment")]
-    public bool ShowAlignmentCube = false;
-    public float AlignmentDepth = 5;
-    public Material AlignmentMaterial;
+    [Header("Screen Size (meters)")]
+    [Tooltip("Physical screen width and height in meters. E.g. 27\" monitor = (0.60, 0.34)")]
+    public Vector2 SizeInMeters = new Vector2(0.60f, 0.34f);
 
+    // Screen corners in world space
     public Vector3 BottomLeft { get; private set; }
     public Vector3 BottomRight { get; private set; }
     public Vector3 TopLeft { get; private set; }
     public Vector3 TopRight { get; private set; }
 
+    // Screen axes
     public Vector3 DirRight { get; private set; }
     public Vector3 DirUp { get; private set; }
     public Vector3 DirNormal { get; private set; }
 
-    private Vector2 _previousSize = new Vector2(8, 4.5f);
-    private Vector2 _previousAspectRatio = new Vector2(16, 9);
+    // Rotation matrix: world -> screen-local space
+    public Matrix4x4 M { get; private set; }
 
-    private GameObject _alignmentCube;
-    private Transform _backTransform;
-    private Transform _leftTransform;
-    private Transform _rightTransform;
-    private Transform _topTransform;
-    private Transform _bottomTransform;
+    [Header("Window Frame")]
+    [Tooltip("Show a thick frame around the projection plane to sell the window illusion")]
+    public bool ShowWindowFrame = false;
+    [Tooltip("How thick the wall is (depth into the scene, meters)")]
+    public float FrameDepth = 0.15f;
+    [Tooltip("How wide the border extends beyond the screen edges (meters)")]
+    public float FrameBorder = 0.3f;
+    public Color FrameColor = new Color(0.35f, 0.33f, 0.30f);
 
-    private Matrix4x4 m;
-    public Matrix4x4 M { get => m; }
-
-    private void OnDrawGizmos()
-    {
-        if (DrawGizmos)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(BottomLeft, BottomRight);
-            Gizmos.DrawLine(BottomLeft, TopLeft);
-            Gizmos.DrawLine(TopRight, BottomRight);
-            Gizmos.DrawLine(TopLeft, TopRight);
-
-            //Draw direction towards eye
-            Gizmos.color = Color.cyan;
-            var planeCenter = BottomLeft + (TopRight - BottomLeft) * 0.5f;
-            Gizmos.DrawLine(planeCenter, planeCenter + DirNormal);
-        }
-    }
-
-    void Start()
-    {
-        if (Application.isPlaying)
-        {
-            _alignmentCube = new GameObject("AlignmentCube");
-            _alignmentCube.transform.SetParent(transform, false);
-
-            _alignmentCube.transform.localPosition = Vector3.zero;
-            _alignmentCube.transform.rotation = transform.rotation;
-
-            _backTransform = CreateAlignmentQuad().transform;
-            _leftTransform = CreateAlignmentQuad().transform;
-            _rightTransform = CreateAlignmentQuad().transform;
-            _topTransform = CreateAlignmentQuad().transform;
-            _bottomTransform = CreateAlignmentQuad().transform;
-        }
-    }
-
-    private GameObject CreateAlignmentQuad()
-    {
-        GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        quad.transform.parent = _alignmentCube.transform;
-        quad.GetComponent<Renderer>().material = AlignmentMaterial;
-        return quad;
-    }
-
-    public void UpdateAlignmentCube()
-    {
-        Vector2 halfSize = Size * 0.5f;
-        UpdateAlignmentQuad(_backTransform, new Vector3(0, 0, AlignmentDepth), new Vector3(Size.x, Size.y),
-            Quaternion.identity);
-
-        UpdateAlignmentQuad(_leftTransform, new Vector3(-halfSize.x, 0, AlignmentDepth * 0.5f),
-            new Vector3(AlignmentDepth, Size.y, 0),
-            Quaternion.Euler(0, -90, 0));
-
-        UpdateAlignmentQuad(_rightTransform,
-            new Vector3(halfSize.x, 0, AlignmentDepth * 0.5f), new Vector3(AlignmentDepth, Size.y, 0),
-            Quaternion.Euler(0, 90, 0));
-
-        UpdateAlignmentQuad(_topTransform,
-            new Vector3(0, halfSize.y, AlignmentDepth * 0.5f), new Vector3(Size.x, AlignmentDepth, 0),
-            Quaternion.Euler(-90, 0, 0));
-
-        UpdateAlignmentQuad(_bottomTransform,
-            new Vector3(0, -halfSize.y, AlignmentDepth * 0.5f), new Vector3(Size.x, AlignmentDepth, 0),
-            Quaternion.Euler(90, 0, 0));
-    }
-
-    private void UpdateAlignmentQuad(Transform t, Vector3 pos, Vector3 scale, Quaternion rotation)
-    {
-        t.localPosition = pos;
-        t.localScale = scale;
-        t.localRotation = rotation;
-    }
+    private GameObject _frameRoot;
 
     void Update()
     {
-        if (Application.isPlaying)
-        {
-            _alignmentCube.SetActive(ShowAlignmentCube);
-            if (_alignmentCube.activeInHierarchy)
-            {
-                UpdateAlignmentCube();
-            }
-        }
+        SizeInMeters.x = Mathf.Max(0.01f, SizeInMeters.x);
+        SizeInMeters.y = Mathf.Max(0.01f, SizeInMeters.y);
+        Vector2 half = SizeInMeters * 0.5f;
 
-        if (LockAspectRatio)
-        {
-            if (AspectRatio.x != _previousAspectRatio.x)
-            {
-                Size.y = Size.x / AspectRatio.x * AspectRatio.y;
-                _previousAspectRatio.y = AspectRatio.y;
-            }
+        BottomLeft  = transform.TransformPoint(new Vector3(-half.x, -half.y, 0));
+        BottomRight = transform.TransformPoint(new Vector3( half.x, -half.y, 0));
+        TopLeft     = transform.TransformPoint(new Vector3(-half.x,  half.y, 0));
+        TopRight    = transform.TransformPoint(new Vector3( half.x,  half.y, 0));
 
-            if (AspectRatio.y != _previousAspectRatio.y)
-            {
-                Size.x = Size.y / AspectRatio.y * AspectRatio.x;
-            }
-
-            if (Size.x != _previousSize.x)
-            {
-                Size.y = Size.x / AspectRatio.x * AspectRatio.y;
-                _previousSize.y = Size.y;
-            }
-
-            if (Size.y != _previousSize.y)
-            {
-                Size.x = Size.y / AspectRatio.y * AspectRatio.x;
-            }
-        }
-
-        Size.x = Mathf.Max(.01f, Size.x);
-        Size.y = Mathf.Max(.01f, Size.y);
-        AspectRatio.x = Mathf.Max(1, AspectRatio.x);
-        AspectRatio.y = Mathf.Max(1, AspectRatio.y);
-
-        _previousSize = Size;
-        _previousAspectRatio = AspectRatio;
-
-        BottomLeft = transform.TransformPoint(new Vector3(-Size.x, -Size.y) * 0.5f);
-        BottomRight = transform.TransformPoint(new Vector3(Size.x, -Size.y) * 0.5f);
-        TopLeft = transform.TransformPoint(new Vector3(-Size.x, Size.y) * 0.5f);
-        TopRight = transform.TransformPoint(new Vector3(Size.x, Size.y) * 0.5f);
-
-        DirRight = (BottomRight - BottomLeft).normalized;
-        DirUp = (TopLeft - BottomLeft).normalized;
+        DirRight  = (BottomRight - BottomLeft).normalized;
+        DirUp     = (TopLeft - BottomLeft).normalized;
         DirNormal = -Vector3.Cross(DirRight, DirUp).normalized;
 
-        m = Matrix4x4.zero;
-        m[0, 0] = DirRight.x;
-        m[0, 1] = DirRight.y;
-        m[0, 2] = DirRight.z;
-
-        m[1, 0] = DirUp.x;
-        m[1, 1] = DirUp.y;
-        m[1, 2] = DirUp.z;
-
-        m[2, 0] = DirNormal.x;
-        m[2, 1] = DirNormal.y;
-        m[2, 2] = DirNormal.z;
-
+        var m = Matrix4x4.zero;
+        m[0, 0] = DirRight.x;  m[0, 1] = DirRight.y;  m[0, 2] = DirRight.z;
+        m[1, 0] = DirUp.x;     m[1, 1] = DirUp.y;     m[1, 2] = DirUp.z;
+        m[2, 0] = DirNormal.x; m[2, 1] = DirNormal.y; m[2, 2] = DirNormal.z;
         m[3, 3] = 1.0f;
+        M = m;
+
+        if (Application.isPlaying)
+            UpdateWindowFrame();
     }
 
-    private void OnApplicationQuit()
+    void UpdateWindowFrame()
     {
-        if (Application.isPlaying && _alignmentCube != null)
+        if (ShowWindowFrame && _frameRoot == null)
+            BuildFrame();
+        if (!ShowWindowFrame && _frameRoot != null)
         {
-            DestroyImmediate(_alignmentCube);
+            Destroy(_frameRoot);
+            _frameRoot = null;
         }
+        if (_frameRoot != null)
+            PositionFrame();
+    }
+
+    void BuildFrame()
+    {
+        _frameRoot = new GameObject("WindowFrame");
+        _frameRoot.transform.SetParent(transform, false);
+
+        // 4 outer walls + 4 inner bevels = 8 cubes
+        string[] names = { "Top", "Bottom", "Left", "Right",
+                           "Bevel_Top", "Bevel_Bottom", "Bevel_Left", "Bevel_Right" };
+        Color bevelColor = new Color(FrameColor.r + 0.08f, FrameColor.g + 0.06f, FrameColor.b + 0.05f);
+        for (int i = 0; i < 8; i++)
+        {
+            var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wall.name = "Frame_" + names[i];
+            wall.transform.SetParent(_frameRoot.transform, false);
+            wall.GetComponent<Renderer>().material.color = i < 4 ? FrameColor : bevelColor;
+        }
+    }
+
+    void PositionFrame()
+    {
+        if (_frameRoot.transform.childCount < 8) return;
+
+        float hw = SizeInMeters.x * 0.5f;
+        float hh = SizeInMeters.y * 0.5f;
+        float d = FrameDepth;
+        float b = FrameBorder;
+        float bevelThick = 0.005f; // thin slab for the inner face
+
+        // --- Outer walls (behind the screen, surrounding the opening) ---
+
+        var top = _frameRoot.transform.GetChild(0);
+        top.localScale = new Vector3(SizeInMeters.x + b * 2f, b, d);
+        top.localPosition = new Vector3(0, hh + b * 0.5f, d * 0.5f);
+
+        var bot = _frameRoot.transform.GetChild(1);
+        bot.localScale = new Vector3(SizeInMeters.x + b * 2f, b, d);
+        bot.localPosition = new Vector3(0, -hh - b * 0.5f, d * 0.5f);
+
+        var left = _frameRoot.transform.GetChild(2);
+        left.localScale = new Vector3(b, SizeInMeters.y + b * 2f, d);
+        left.localPosition = new Vector3(-hw - b * 0.5f, 0, d * 0.5f);
+
+        var right = _frameRoot.transform.GetChild(3);
+        right.localScale = new Vector3(b, SizeInMeters.y + b * 2f, d);
+        right.localPosition = new Vector3(hw + b * 0.5f, 0, d * 0.5f);
+
+        // --- Inner bevels (the visible inner edges of the wall opening) ---
+        // These face inward and run along the depth of the wall.
+        // They're what you see when you look at the "cut" edge of the wall.
+
+        // Top bevel: horizontal strip along the top edge of the opening
+        var bTop = _frameRoot.transform.GetChild(4);
+        bTop.localScale = new Vector3(SizeInMeters.x, bevelThick, d);
+        bTop.localPosition = new Vector3(0, hh, d * 0.5f);
+
+        // Bottom bevel
+        var bBot = _frameRoot.transform.GetChild(5);
+        bBot.localScale = new Vector3(SizeInMeters.x, bevelThick, d);
+        bBot.localPosition = new Vector3(0, -hh, d * 0.5f);
+
+        // Left bevel: vertical strip along the left edge of the opening
+        var bLeft = _frameRoot.transform.GetChild(6);
+        bLeft.localScale = new Vector3(bevelThick, SizeInMeters.y, d);
+        bLeft.localPosition = new Vector3(-hw, 0, d * 0.5f);
+
+        // Right bevel
+        var bRight = _frameRoot.transform.GetChild(7);
+        bRight.localScale = new Vector3(bevelThick, SizeInMeters.y, d);
+        bRight.localPosition = new Vector3(hw, 0, d * 0.5f);
+    }
+
+    void OnDestroy()
+    {
+        if (_frameRoot != null)
+            DestroyImmediate(_frameRoot);
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(BottomLeft, BottomRight);
+        Gizmos.DrawLine(BottomRight, TopRight);
+        Gizmos.DrawLine(TopRight, TopLeft);
+        Gizmos.DrawLine(TopLeft, BottomLeft);
+
+        Gizmos.color = Color.cyan;
+        Vector3 center = (BottomLeft + TopRight) * 0.5f;
+        Gizmos.DrawLine(center, center + DirNormal * 0.1f);
     }
 }
