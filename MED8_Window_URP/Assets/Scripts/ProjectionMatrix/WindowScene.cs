@@ -28,8 +28,8 @@ public class WindowScene : MonoBehaviour
         if (_root != null) DestroyImmediate(_root);
         _root = new GameObject("--- WINDOW SCENE ---");
 
-        float w = Screen.Size.x;
-        float h = Screen.Size.y;
+        float w = Screen.SizeInMeters.x;
+        float h = Screen.SizeInMeters.y;
         Vector3 o = Screen.transform.position;
         Quaternion r = Screen.transform.rotation;
 

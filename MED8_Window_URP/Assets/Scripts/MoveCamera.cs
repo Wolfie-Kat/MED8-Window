@@ -46,8 +46,8 @@ public class MoveCamera : MonoBehaviour
 
         // World scale: how many scene units = 1 cm of real-world movement.
         // Separate horizontal and vertical scales so any screen shape maps correctly.
-        float worldScaleH = screen.Size.x / ScreenWidthCm;
-        float worldScaleV = screen.Size.y / ScreenHeightCm;
+        float worldScaleH = screen.SizeInMeters.x / ScreenWidthCm;
+        float worldScaleV = screen.SizeInMeters.y / ScreenHeightCm;
 
         // Use live distance from camera, fall back to manual value
         float distanceCm = gameManager.distance > 0f ? gameManager.distance : SittingDistanceCm;
