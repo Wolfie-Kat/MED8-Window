@@ -15,7 +15,7 @@ def get_base_path():
         return sys._MEIPASS
     else:
         # Running as normal Python script
-        return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        return os.path.dirname(os.path.abspath(__file__))
 
 BASE_PATH = get_base_path()
 
