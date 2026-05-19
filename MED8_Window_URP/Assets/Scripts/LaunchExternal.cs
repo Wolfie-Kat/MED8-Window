@@ -23,7 +23,7 @@ public class LaunchExternal : MonoBehaviour
 
     void Start()
     {
-        string exePath = Path.Combine(Application.streamingAssetsPath, "face_gesture_server.exe");
+        string exePath = Path.Combine(Application.streamingAssetsPath, "LaunchScript.exe");
 
         ProcessStartInfo startInfo = new ProcessStartInfo
         {

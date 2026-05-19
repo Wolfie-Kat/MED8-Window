@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using System.Diagnostics;
 using System.IO;
+using UnityEngine.SceneManagement;
 
 public class UnityPythonConnector : MonoBehaviour
 {
@@ -51,6 +52,16 @@ public class UnityPythonConnector : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            SceneManager.LoadScene("NYC Upscaled");
+        }
+
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            SceneManager.LoadScene("NYC Upscaled NO OBJECTS");
+        }
+
         if (hasNewData)
         {
             timer = 0f;
