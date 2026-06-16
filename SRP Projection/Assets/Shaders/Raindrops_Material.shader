@@ -17,8 +17,8 @@ Shader "Custom/Raindrops_Material"
         
         // Drop properties
         _NumDrops ("Number of Drops", Range(20, 150)) = 60
-        _MinSize ("Minimum Drop Size", Range(0.03, 0.2)) = 0.05
-        _MaxSize ("Maximum Drop Size", Range(0.1, 0.5)) = 0.15
+        _MinSize ("Minimum Drop Size", Range(0.003, 0.2)) = 0.05
+        _MaxSize ("Maximum Drop Size", Range(0.01, 0.5)) = 0.15
         _DropBrightness ("Drop Brightness", Range(-0.3, 0.5)) = 0.08
         _DropLifetime ("Drop Lifetime", Range(0.5, 5)) = 2.5
         

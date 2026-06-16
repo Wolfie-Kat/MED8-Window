@@ -64,38 +64,38 @@ Material:
     - _BumpScale: 1
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
-    - _DropBrightness: 0.08
-    - _DropLifetime: 2.5
+    - _DropBrightness: 0
+    - _DropLifetime: 0.5
     - _DstBlend: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _Intensity: 0.05
-    - _MaxSize: 0.15
+    - _Intensity: 0.116
+    - _MaxSize: 0.019
     - _Metallic: 0
-    - _MinSize: 0.05
+    - _MinSize: 0.003
     - _Mode: 0
-    - _NumDrops: 60
+    - _NumDrops: 121
     - _OcclusionStrength: 1
     - _OutlineColorB: 1
     - _OutlineColorG: 0.9
     - _OutlineColorR: 0.8
-    - _OutlineStrength: 0.15
+    - _OutlineStrength: 0.209
     - _Parallax: 0.02
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
-    - _SpecularStrength: 1
+    - _SpecularStrength: 0.59
     - _SrcBlend: 1
-    - _StreakBrightness: 0.05
-    - _StreakDensity: 15
-    - _StreakLength: 0.4
-    - _StreakSpeed: -1
-    - _StreakWidth: 0.03
-    - _Transparency: 0
+    - _StreakBrightness: 0
+    - _StreakDensity: 24
+    - _StreakLength: 0.136
+    - _StreakSpeed: -2
+    - _StreakWidth: 0.01
+    - _Transparency: 1
     - _UVSec: 0
     - _ZWrite: 1
-    - _ZigZagAmount: 0.03
-    - _ZigZagFrequency: 4
+    - _ZigZagAmount: 0.0046
+    - _ZigZagFrequency: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
